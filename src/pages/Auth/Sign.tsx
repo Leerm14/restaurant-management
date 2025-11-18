@@ -98,11 +98,10 @@ const Sign: React.FC = () => {
         setSignUpConfirmPassword("");
 
         // Gọi login để cập nhật AuthContext
-        await login();
-
-        setTimeout(() => {
-          navigate("/");
-        }, 1000);
+        // await login()
+        // setTimeout(() => {
+        //   navigate("/");
+        // }, 1000);
       } catch (error: any) {
         console.error("Error creating user in backend:", error);
         try {
