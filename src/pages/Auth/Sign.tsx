@@ -6,6 +6,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   UserCredential,
+  sendEmailVerification,
 } from "firebase/auth";
 import apiClient from "../../services/api";
 import { useNavigate } from "react-router-dom";
@@ -59,6 +60,8 @@ const Sign: React.FC = () => {
         signUpEmail,
         signUpPassword
       );
+      await sendEmailVerification(userCredential.user);
+      console.log("Verification email sent to:", signUpEmail);
     } catch (error: any) {
       console.error("Error signing up (Firebase):", error);
       switch (error.code) {
@@ -98,10 +101,11 @@ const Sign: React.FC = () => {
         setSignUpConfirmPassword("");
 
         // Gọi login để cập nhật AuthContext
-        // await login()
-        // setTimeout(() => {
-        //   navigate("/");
-        // }, 1000);
+        await login();
+
+        setTimeout(() => {
+          navigate("/");
+        }, 1000);
       } catch (error: any) {
         console.error("Error creating user in backend:", error);
         try {
@@ -148,6 +152,10 @@ const Sign: React.FC = () => {
       await login();
       setSuccess("Đăng nhập thành công!");
       console.log("User signed in:", userCredential.user);
+      if (!userCredential.user.emailVerified) {
+        setError("Vui lòng xác nhận email trước khi đăng nhập.");
+        return;
+      }
       setTimeout(() => {
         navigate("/");
       }, 1000);
