@@ -1,0 +1,198 @@
+/* Order History Page Styles */
+.order-history-page {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  padding: 40px 0;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.order-history-header {
+  margin-bottom: 40px;
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0;
+  text-align: left;
+}
+
+/* Table Styles */
+.order-table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.order-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.order-table thead {
+  background-color: #f8f9fa;
+}
+
+.order-table th {
+  padding: 20px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 1px solid #e9ecef;
+  font-size: 14px;
+}
+
+.order-table td {
+  padding: 20px 16px;
+  border-bottom: 1px solid #f1f3f4;
+  color: #2c3e50;
+  vertical-align: middle;
+}
+
+.order-table tbody tr:hover {
+  background-color: #f8f9fa;
+  transition: background-color 0.2s ease;
+}
+
+.order-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Table Cell Styles */
+.order-id {
+  font-weight: 600;
+  color: #495057;
+}
+
+.order-date {
+  color: #6c757d;
+}
+
+.order-total {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+/* Status Badges */
+.status-badge-order-history {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  display: inline-block;
+  min-width: 80px;
+}
+
+.status-completed {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-processing {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-cancelled {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* Action Button */
+.action-button {
+  background: transparent;
+  border: none;
+  color: #007bff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.action-button:hover {
+  background-color: #e3f2fd;
+  color: #0056b3;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6c757d;
+}
+
+.empty-state p {
+  font-size: 16px;
+  margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .order-history-page {
+    padding: 20px 0;
+  }
+
+  .container {
+    padding: 0 15px;
+  }
+
+  .page-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+
+  .order-table-container {
+    overflow-x: auto;
+    border-radius: 8px;
+  }
+
+  .order-table {
+    min-width: 600px;
+  }
+
+  .order-table th,
+  .order-table td {
+    padding: 12px 8px;
+    font-size: 13px;
+  }
+
+  .status-badge-order-history {
+    padding: 4px 8px;
+    font-size: 11px;
+    min-width: 70px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 20px;
+  }
+
+  .order-table th,
+  .order-table td {
+    padding: 10px 6px;
+    font-size: 12px;
+  }
+
+  .status-badge-order-history {
+    padding: 3px 6px;
+    font-size: 10px;
+    min-width: 60px;
+  }
+
+  .action-button {
+    font-size: 12px;
+    padding: 3px 6px;
+  }
+}
