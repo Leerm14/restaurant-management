@@ -99,12 +99,9 @@ const Sign: React.FC = () => {
         setSignUpPhone("");
         setSignUpPassword("");
         setSignUpConfirmPassword("");
-
-        // Gọi login để cập nhật AuthContext
         await login();
-
         setTimeout(() => {
-          navigate("/");
+          window.location.href = "/signin";
         }, 1000);
       } catch (error: any) {
         console.error("Error creating user in backend:", error);
@@ -150,12 +147,12 @@ const Sign: React.FC = () => {
         signInPassword
       );
       await login();
-      setSuccess("Đăng nhập thành công!");
       console.log("User signed in:", userCredential.user);
-      if (!userCredential.user.emailVerified) {
-        setError("Vui lòng xác nhận email trước khi đăng nhập.");
-        return;
-      }
+      // if (!userCredential.user.emailVerified) {
+      //   setError("Vui lòng xác nhận email trước khi đăng nhập.");
+      //   return;
+      // }
+      setSuccess("Đăng nhập thành công!");
       setTimeout(() => {
         navigate("/");
       }, 1000);
@@ -284,7 +281,7 @@ const Sign: React.FC = () => {
                 onChange={(e) => setSignInPassword(e.target.value)}
               />
             </div>
-            <a href="#">Forgot your password?</a>
+            <a href="/reset-password">Forgot your password?</a>
             <button type="submit">Sign In</button>
           </form>
         </div>

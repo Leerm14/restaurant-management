@@ -7,6 +7,7 @@ import Home from "./pages/User/Home/Home.tsx";
 import Menu from "./pages/User/Menu/Menu.tsx";
 import Booking from "./pages/User/Booking/Booking.tsx";
 import Sign from "./pages/Auth/Sign.tsx";
+import ResetPassword from "./pages/Auth/reset.tsx";
 import OrderHistory from "./pages/User/OrderHistory/OrderHistory.tsx";
 import ProtectRouter from "./pages/protectrouter.tsx";
 import AdminMenuManagement from "./pages/Admin/AdminMenuManagement.tsx";
@@ -43,6 +44,14 @@ function AppRoutes(): React.ReactElement {
           element={
             <AuthLayout>
               <Sign />
+            </AuthLayout>
+          }
+        />
+        <Route
+          path="/reset-password"
+          element={
+            <AuthLayout>
+              <ResetPassword />
             </AuthLayout>
           }
         />
