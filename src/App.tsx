@@ -14,7 +14,7 @@ import AdminMenuManagement from "./pages/Admin/AdminMenuManagement.tsx";
 import AdminAccounts from "./pages/Admin/AdminAccounts.tsx";
 import AdminTables from "./pages/Admin/AdminTables.tsx";
 import AdminReports from "./pages/Admin/AdminReports.tsx";
-import AdminSettings from "./pages/Admin/AdminSettings.tsx";
+import AdminBooking from "./pages/Admin/AdminBooking.tsx";
 import { AuthProvider, useAuth } from "./contexts/AuthContext.tsx";
 
 function AppRoutes(): React.ReactElement {
@@ -73,7 +73,7 @@ function AppRoutes(): React.ReactElement {
                   <Route path="/menu" element={<AdminMenuManagement />} />
                   <Route path="/tables" element={<AdminTables />} />
                   <Route path="/reports" element={<AdminReports />} />
-                  <Route path="/settings" element={<AdminSettings />} />
+                  <Route path="/booking" element={<AdminBooking />} />
                 </Routes>
               </AdminLayout>
             </ProtectRouter>

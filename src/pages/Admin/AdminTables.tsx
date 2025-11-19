@@ -63,7 +63,14 @@ const AdminTables: React.FC = () => {
   const loadTableStats = async () => {
     try {
       const response = await apiClient.get("/api/tables/count");
-      setStats(response.data);
+      console.log("Stats response:", response.data);
+      const byStatus = response.data.byStatus || {};
+      setStats({
+        Available: byStatus.Available || 0,
+        Booked: byStatus.Booked || 0,
+        Used: byStatus.Used || 0,
+        Cleaning: byStatus.Cleaning || 0,
+      });
     } catch (err: any) {
       console.error("Error loading table stats:", err);
       setError(err.response?.data?.message || "Không thể tải thống kê bàn");
@@ -143,8 +150,8 @@ const AdminTables: React.FC = () => {
     setLoading(true);
     setError("");
     try {
-      await apiClient.patch(`/api/tables/${tableId}/status`, {
-        status: newStatus,
+      await apiClient.patch(`/api/tables/${tableId}/status`, null, {
+        params: { status: newStatus },
       });
       loadTableStats();
       loadTables();

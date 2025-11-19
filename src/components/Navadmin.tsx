@@ -20,8 +20,8 @@ const Navadmin: React.FC<NavAdminProps> = ({ onMenuSelect, activeMenu }) => {
       setSelectedMenu("tables");
     } else if (currentPath.includes("/admin/reports")) {
       setSelectedMenu("reports");
-    } else if (currentPath.includes("/admin/settings")) {
-      setSelectedMenu("settings");
+    } else if (currentPath.includes("/admin/booking")) {
+      setSelectedMenu("booking");
     } else if (currentPath.includes("/admin/accounts")) {
       setSelectedMenu("accounts");
     }
@@ -53,10 +53,10 @@ const Navadmin: React.FC<NavAdminProps> = ({ onMenuSelect, activeMenu }) => {
       to: "/admin/reports",
     },
     {
-      id: "settings",
-      label: "Cài đặt hệ thống",
-      icon: "fas fa-cog",
-      to: "/admin/settings",
+      id: "booking",
+      label: "Đặt bàn",
+      icon: "fas fa-calendar-check",
+      to: "/admin/booking",
     },
   ];
 
