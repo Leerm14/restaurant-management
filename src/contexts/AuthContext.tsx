@@ -14,6 +14,7 @@ export type UserRole = "user" | "staff" | "admin";
 interface AuthContextType {
   isAuthenticated: boolean;
   userRole: UserRole | null;
+  userId: number | null;
   login: () => Promise<void>;
   logout: () => void;
   loading: boolean;
@@ -26,6 +27,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   const fetchUserInfo = async () => {
@@ -33,6 +35,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const response = await apiClient.get("/api/users/me");
       console.log("Fetched user info:", response.data);
       setUserRole(response.data.role);
+      setUserId(response.data.id);
       setIsAuthenticated(true);
     } catch (error) {
       console.error("Failed to fetch user info", error);
@@ -51,6 +54,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     auth.signOut();
     setIsAuthenticated(false);
     setUserRole(null);
+    setUserId(null);
   };
 
   useEffect(() => {
@@ -60,6 +64,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       } else {
         setIsAuthenticated(false);
         setUserRole(null);
+        setUserId(null);
         setLoading(false);
       }
     });
@@ -69,7 +74,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, userRole, login, logout, loading }}
+      value={{ isAuthenticated, userRole, userId, login, logout, loading }}
     >
       {children}
     </AuthContext.Provider>

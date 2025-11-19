@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./AdminBooking.css";
 import apiClient from "../../services/api";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface Booking {
   id: number;
@@ -21,6 +22,7 @@ interface BookingCreateRequest {
 }
 
 const AdminBooking: React.FC = () => {
+  const { userId } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -33,6 +35,7 @@ const AdminBooking: React.FC = () => {
   const [pageSize] = useState<number>(10);
 
   const [formData, setFormData] = useState<BookingCreateRequest>({
+    userId: userId || undefined,
     tableId: 0,
     bookingTime: "",
     numGuests: 2,
@@ -67,9 +70,11 @@ const AdminBooking: React.FC = () => {
     setLoading(true);
     setError("");
     try {
-      await apiClient.post("/api/bookings", formData);
+      const requestData = { ...formData, userId: userId || formData.userId };
+      await apiClient.post("/api/bookings", requestData);
       setShowAddModal(false);
       setFormData({
+        userId: userId || undefined,
         tableId: 0,
         bookingTime: "",
         numGuests: 2,
@@ -365,6 +370,21 @@ const AdminBooking: React.FC = () => {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>Tạo đặt bàn mới</h2>
             <form onSubmit={handleAddBooking}>
+              <div className="form-group">
+                <label>ID người dùng:</label>
+                <input
+                  type="number"
+                  required
+                  value={formData.userId || ""}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      userId: parseInt(e.target.value) || undefined,
+                    })
+                  }
+                  placeholder="Nhập ID người dùng"
+                />
+              </div>
               <div className="form-group">
                 <label>Số bàn:</label>
                 <input
