@@ -26,15 +26,18 @@ const Cart: React.FC = () => {
   const { userId } = useAuth();
   const [activeBooking, setActiveBooking] = useState<Booking | null>(null);
   const [loadingBooking, setLoadingBooking] = useState(true);
+  const [orderType, setOrderType] = useState<"Dinein" | "Takeaway">("Dinein");
 
-  // Kiểm tra xem user có booking đang active không
+  // Kiểm tra xem user có booking đang active không (chỉ khi chọn Dinein)
   useEffect(() => {
     const checkActiveBooking = async () => {
-      if (!userId) {
+      if (!userId || orderType === "Takeaway") {
         setLoadingBooking(false);
+        setActiveBooking(null);
         return;
       }
 
+      setLoadingBooking(true);
       try {
         const response = await apiClient.get("/api/bookings", {
           params: {
@@ -70,7 +73,7 @@ const Cart: React.FC = () => {
     };
 
     checkActiveBooking();
-  }, [userId]);
+  }, [userId, orderType]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -86,14 +89,14 @@ const Cart: React.FC = () => {
       return;
     }
 
-    if (!activeBooking) {
-      // Chưa có booking -> yêu cầu đặt bàn trước
-      navigate("/booking", { state: { fromCart: true } });
+    if (cartItems.length === 0) {
+      alert("Giỏ hàng trống, vui lòng thêm món");
       return;
     }
 
-    if (cartItems.length === 0) {
-      alert("Giỏ hàng trống, vui lòng thêm món");
+    // Nếu chọn Dinein mà chưa có booking -> yêu cầu đặt bàn trước
+    if (orderType === "Dinein" && !activeBooking) {
+      navigate("/booking", { state: { fromCart: true } });
       return;
     }
 
@@ -105,19 +108,36 @@ const Cart: React.FC = () => {
       }));
 
       // Create OrderCreateRequest DTO
-      const orderCreateRequest = {
+      const orderCreateRequest: any = {
         userId: userId,
-        tableId: activeBooking.tableId,
-        orderType: "dine-in", // Đặt bàn tại nhà hàng
+        orderType: orderType,
         orderItems: orderItems,
       };
+
+      // Chỉ thêm tableId nếu là Dinein
+      if (orderType === "Dinein" && activeBooking) {
+        orderCreateRequest.tableId = activeBooking.tableId;
+      }
 
       // Call POST /api/orders
       const response = await apiClient.post("/api/orders", orderCreateRequest);
 
       if (response.status === 201) {
+        // Nếu là Dinein, cập nhật trạng thái booking thành Completed
+        if (orderType === "Dinein" && activeBooking) {
+          try {
+            await apiClient.put(`/api/bookings/${activeBooking.id}`, {
+              ...activeBooking,
+              status: "Completed",
+            });
+          } catch (error) {
+            console.error("Error updating booking status:", error);
+          }
+        }
+
         alert("Đặt món thành công!");
         clearCart(); // Xóa giỏ hàng sau khi đặt thành công
+        setActiveBooking(null); // Reset booking state
         navigate("/order-history"); // Chuyển đến lịch sử đơn hàng
       }
     } catch (error: any) {
@@ -215,6 +235,30 @@ const Cart: React.FC = () => {
 
             <div className="cart-summary">
               <h2 className="summary-title">Tổng Đơn Hàng</h2>
+
+              {/* Chọn phương thức */}
+              <div className="order-type-selection">
+                <h3 className="order-type-title">Phương thức</h3>
+                <div className="order-type-buttons">
+                  <button
+                    className={`order-type-btn ${
+                      orderType === "Dinein" ? "active" : ""
+                    }`}
+                    onClick={() => setOrderType("Dinein")}
+                  >
+                    🍽️ Tại chỗ
+                  </button>
+                  <button
+                    className={`order-type-btn ${
+                      orderType === "Takeaway" ? "active" : ""
+                    }`}
+                    onClick={() => setOrderType("Takeaway")}
+                  >
+                    🥡 Mang đi
+                  </button>
+                </div>
+              </div>
+
               <div className="summary-row">
                 <span>Số lượng món:</span>
                 <span className="summary-value">{getTotalItems()}</span>
@@ -232,32 +276,43 @@ const Cart: React.FC = () => {
                 </span>
               </div>
 
-              {loadingBooking ? (
-                <button className="checkout-btn" disabled>
-                  Đang kiểm tra...
-                </button>
-              ) : activeBooking ? (
+              {/* Hiển thị thông tin booking cho Dinein */}
+              {orderType === "Dinein" && (
                 <>
-                  <div className="booking-info">
-                    <p className="booking-info-title">
-                      ✓ Đã có đặt bàn: {activeBooking.tableName}
-                    </p>
-                    <p className="booking-info-time">
-                      Thời gian:{" "}
-                      {new Date(activeBooking.bookingTime).toLocaleString(
-                        "vi-VN"
-                      )}
-                    </p>
-                  </div>
-                  <button className="checkout-btn" onClick={handleCheckout}>
-                    Đặt món ngay
-                  </button>
+                  {loadingBooking ? (
+                    <div className="booking-info">
+                      <p>Đang kiểm tra đặt bàn...</p>
+                    </div>
+                  ) : activeBooking ? (
+                    <div className="booking-info">
+                      <p className="booking-info-title">
+                        ✓ Đã có đặt bàn: {activeBooking.tableName}
+                      </p>
+                      <p className="booking-info-time">
+                        Thời gian:{" "}
+                        {new Date(activeBooking.bookingTime).toLocaleString(
+                          "vi-VN"
+                        )}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="booking-info warning">
+                      <p>⚠️ Chưa có đặt bàn</p>
+                      <p className="booking-info-time">
+                        Vui lòng đặt bàn trước khi đặt món
+                      </p>
+                    </div>
+                  )}
                 </>
-              ) : (
-                <button className="checkout-btn" onClick={handleCheckout}>
-                  Đặt bàn trước
-                </button>
               )}
+
+              {/* Nút đặt món */}
+              <button className="checkout-btn" onClick={handleCheckout}>
+                {orderType === "Dinein" && !activeBooking
+                  ? "Đặt bàn trước"
+                  : "Đặt món ngay"}
+              </button>
+
               <button className="clear-cart-btn" onClick={handleClearCart}>
                 Xóa giỏ hàng
               </button>
