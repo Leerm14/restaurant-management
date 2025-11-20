@@ -6,6 +6,7 @@ import AuthLayout from "./layouts/AuthLayout.tsx";
 import Home from "./pages/User/Home/Home.tsx";
 import Menu from "./pages/User/Menu/Menu.tsx";
 import Booking from "./pages/User/Booking/Booking.tsx";
+import Cart from "./pages/User/Cart/Cart.tsx";
 import Sign from "./pages/Auth/Sign.tsx";
 import ResetPassword from "./pages/Auth/reset.tsx";
 import OrderHistory from "./pages/User/OrderHistory/OrderHistory.tsx";
@@ -16,7 +17,8 @@ import AdminTables from "./pages/Admin/AdminTables.tsx";
 import AdminReports from "./pages/Admin/AdminReports.tsx";
 import AdminBooking from "./pages/Admin/AdminBooking.tsx";
 import { AuthProvider, useAuth } from "./contexts/AuthContext.tsx";
-
+import { CartProvider } from "./contexts/CartContext.tsx";
+import NotFoundPage from "./pages/404.tsx";
 function AppRoutes(): React.ReactElement {
   const { isAuthenticated, userRole, loading } = useAuth();
 
@@ -99,6 +101,17 @@ function AppRoutes(): React.ReactElement {
                   }
                 />
                 <Route
+                  path="/cart"
+                  element={
+                    <ProtectRouter
+                      isAuthenticated={isAuthenticated}
+                      userRole={userRole}
+                    >
+                      <Cart />
+                    </ProtectRouter>
+                  }
+                />
+                <Route
                   path="/booking"
                   element={
                     <ProtectRouter
@@ -124,6 +137,8 @@ function AppRoutes(): React.ReactElement {
             </MainLayout>
           }
         />
+
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );
@@ -132,7 +147,9 @@ function AppRoutes(): React.ReactElement {
 function App(): React.ReactElement {
   return (
     <AuthProvider>
-      <AppRoutes />
+      <CartProvider>
+        <AppRoutes />
+      </CartProvider>
     </AuthProvider>
   );
 }

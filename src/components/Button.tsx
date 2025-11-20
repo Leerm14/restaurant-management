@@ -6,6 +6,7 @@ interface ButtonProps {
   onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
   variant?: "primary" | "secondary";
   className?: string;
+  disabled?: boolean;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -13,10 +14,11 @@ const Button: React.FC<ButtonProps> = ({
   onClick,
   variant = "primary",
   className,
+  disabled = false,
 }) => {
   const buttonClasses = `btn btn-${variant} ${className || ""}`.trim();
   return (
-    <button onClick={onClick} className={buttonClasses}>
+    <button onClick={onClick} className={buttonClasses} disabled={disabled}>
       {children}
     </button>
   );

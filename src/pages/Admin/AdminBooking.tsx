@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./AdminBooking.css";
 import apiClient from "../../services/api";
-import { useAuth } from "../../contexts/AuthContext";
 
 interface Booking {
   id: number;
@@ -9,6 +8,7 @@ interface Booking {
   userName: string;
   tableId: number;
   tableName: string;
+  tableNumber: number;
   bookingTime: string;
   numGuests: number;
   status: "Confirmed" | "Pending" | "Cancelled" | "Completed";
@@ -22,7 +22,6 @@ interface BookingCreateRequest {
 }
 
 const AdminBooking: React.FC = () => {
-  const { userId } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -35,7 +34,7 @@ const AdminBooking: React.FC = () => {
   const [pageSize] = useState<number>(10);
 
   const [formData, setFormData] = useState<BookingCreateRequest>({
-    userId: userId || undefined,
+    userId: undefined,
     tableId: 0,
     bookingTime: "",
     numGuests: 2,
@@ -53,12 +52,40 @@ const AdminBooking: React.FC = () => {
       const response = await apiClient.get("/api/bookings", {
         params: { page: currentPage, size: pageSize },
       });
-      setBookings(response.data);
+      const data = response.data;
+      console.log("Fetched bookings:", data);
+
+      // Extract bookings array from response
+      let bookingsData = [];
+      if (Array.isArray(data)) {
+        bookingsData = data;
+      } else if (data && Array.isArray(data.content)) {
+        bookingsData = data.content;
+      } else if (data && typeof data === "object") {
+        // Handle case where data might be a single booking wrapped in object
+        bookingsData = [data];
+      }
+
+      // Clean up the data to remove circular references
+      const cleanedBookings = bookingsData.map((booking: any) => ({
+        id: booking.id,
+        userId: booking.user?.id || booking.userId,
+        userName: booking.user?.fullName || booking.userName || "N/A",
+        tableId: booking.table?.id || booking.tableId,
+        tableName: booking.table?.name || booking.tableName || "N/A",
+        tableNumber: booking.table?.tableNumber || booking.tableNumber || 0,
+        bookingTime: booking.bookingTime,
+        numGuests: booking.numGuests,
+        status: booking.status,
+      }));
+
+      setBookings(cleanedBookings);
     } catch (err: any) {
       console.error("Error loading bookings:", err);
       setError(
         err.response?.data?.message || "Không thể tải danh sách đặt bàn"
       );
+      setBookings([]);
     } finally {
       setLoading(false);
     }
@@ -70,19 +97,96 @@ const AdminBooking: React.FC = () => {
     setLoading(true);
     setError("");
     try {
-      const requestData = { ...formData, userId: userId || formData.userId };
+      // Validate user ID
+      if (!formData.userId || formData.userId <= 0) {
+        setError("Vui lòng nhập ID người dùng hợp lệ");
+        setLoading(false);
+        return;
+      }
+
+      // Validate table ID
+      if (!formData.tableId || formData.tableId <= 0) {
+        setError("Vui lòng nhập ID bàn hợp lệ");
+        setLoading(false);
+        return;
+      }
+
+      // Validate booking time is in the future
+      const bookingDate = new Date(formData.bookingTime);
+      const now = new Date();
+      if (bookingDate <= now) {
+        setError("Thời gian đặt bàn phải là thời điểm trong tương lai");
+        setLoading(false);
+        return;
+      }
+
+      // Validate number of guests
+      if (formData.numGuests < 1) {
+        setError("Số khách phải lớn hơn 0");
+        setLoading(false);
+        return;
+      }
+
+      // Format time to include seconds for ISO-8601
+      let formattedTime = formData.bookingTime;
+      if (
+        formattedTime &&
+        !formattedTime.includes(":", formattedTime.lastIndexOf(":"))
+      ) {
+        formattedTime = formattedTime + ":00";
+      }
+
+      const requestData = {
+        ...formData,
+        bookingTime: formattedTime,
+        userId: Number(formData.userId),
+      };
       await apiClient.post("/api/bookings", requestData);
       setShowAddModal(false);
       setFormData({
-        userId: userId || undefined,
+        userId: undefined,
         tableId: 0,
         bookingTime: "",
         numGuests: 2,
       });
+      setError("");
       loadBookings();
     } catch (err: any) {
       console.error("Error creating booking:", err);
-      setError(err.response?.data?.message || "Không thể tạo đặt bàn mới");
+      const errorMsg =
+        err.response?.data?.message ||
+        err.response?.data ||
+        "Không thể tạo đặt bàn mới";
+
+      // Translate common error messages
+      if (typeof errorMsg === "string") {
+        if (
+          errorMsg.includes("not available") ||
+          errorMsg.includes("not found")
+        ) {
+          setError(
+            "Bàn không tồn tại hoặc không ở trạng thái Available (Trống)"
+          );
+        } else if (
+          errorMsg.includes("capacity") ||
+          errorMsg.includes("exceeds")
+        ) {
+          setError("Số khách vượt quá sức chứa của bàn");
+        } else if (
+          errorMsg.includes("already booked") ||
+          errorMsg.includes("conflict")
+        ) {
+          setError("Bàn đã được đặt trong khoảng thời gian này");
+        } else if (errorMsg.includes("future") || errorMsg.includes("past")) {
+          setError("Thời gian đặt bàn phải là thời điểm trong tương lai");
+        } else if (errorMsg.includes("user") || errorMsg.includes("User")) {
+          setError("ID người dùng không tồn tại trong hệ thống");
+        } else {
+          setError(errorMsg);
+        }
+      } else {
+        setError("Không thể tạo đặt bàn mới");
+      }
     } finally {
       setLoading(false);
     }
@@ -96,50 +200,132 @@ const AdminBooking: React.FC = () => {
     setLoading(true);
     setError("");
     try {
-      await apiClient.put(`/api/bookings/${selectedBooking.id}`, formData);
+      // Validate table ID
+      if (!formData.tableId || formData.tableId <= 0) {
+        setError("Vui lòng nhập ID bàn hợp lệ");
+        setLoading(false);
+        return;
+      }
+
+      // Validate booking time is in the future
+      const bookingDate = new Date(formData.bookingTime);
+      const now = new Date();
+      if (bookingDate <= now) {
+        setError("Thời gian đặt bàn phải là thời điểm trong tương lai");
+        setLoading(false);
+        return;
+      }
+
+      // Validate number of guests
+      if (formData.numGuests < 1) {
+        setError("Số khách phải lớn hơn 0");
+        setLoading(false);
+        return;
+      }
+
+      // Format time to include seconds for ISO-8601
+      let formattedTime = formData.bookingTime;
+      if (
+        formattedTime &&
+        !formattedTime.includes(":", formattedTime.lastIndexOf(":"))
+      ) {
+        formattedTime = formattedTime + ":00";
+      }
+
+      const updateData = {
+        ...formData,
+        bookingTime: formattedTime,
+      };
+
+      await apiClient.put(`/api/bookings/${selectedBooking.id}`, updateData);
       setShowEditModal(false);
       setSelectedBooking(null);
+      setError("");
       loadBookings();
     } catch (err: any) {
       console.error("Error updating booking:", err);
-      setError(err.response?.data?.message || "Không thể cập nhật đặt bàn");
+      const errorMsg =
+        err.response?.data?.message ||
+        err.response?.data ||
+        "Không thể cập nhật đặt bàn";
+
+      // Translate common error messages
+      if (typeof errorMsg === "string") {
+        if (
+          errorMsg.includes("not available") ||
+          errorMsg.includes("not found")
+        ) {
+          setError(
+            "Bàn không tồn tại hoặc không ở trạng thái Available (Trống)"
+          );
+        } else if (
+          errorMsg.includes("capacity") ||
+          errorMsg.includes("exceeds")
+        ) {
+          setError("Số khách vượt quá sức chứa của bàn");
+        } else if (
+          errorMsg.includes("already booked") ||
+          errorMsg.includes("conflict")
+        ) {
+          setError("Bàn đã được đặt trong khoảng thời gian này");
+        } else if (errorMsg.includes("future") || errorMsg.includes("past")) {
+          setError("Thời gian đặt bàn phải là thời điểm trong tương lai");
+        } else {
+          setError(errorMsg);
+        }
+      } else {
+        setError("Không thể cập nhật đặt bàn");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // API 7.1: Hủy đặt bàn
+  // API: Cập nhật trạng thái đặt bàn (PATCH)
+  const handleUpdateBookingStatus = async (id: number, status: string) => {
+    const confirmMessages: { [key: string]: string } = {
+      Confirmed: "Xác nhận đặt bàn này?",
+      Completed: "Đánh dấu đặt bàn này là hoàn thành?",
+      Cancelled: "Bạn có chắc chắn muốn hủy đặt bàn này?",
+    };
+
+    if (
+      !window.confirm(
+        confirmMessages[status] || "Xác nhận thay đổi trạng thái?"
+      )
+    )
+      return;
+
+    setLoading(true);
+    setError("");
+    try {
+      await apiClient.patch(`/api/bookings/${id}/status`, null, {
+        params: { status },
+      });
+      loadBookings();
+    } catch (err: any) {
+      console.error("Error updating booking status:", err);
+      setError(
+        err.response?.data?.message || `Không thể cập nhật trạng thái đặt bàn`
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // API 7.1: Hủy đặt bàn (fallback nếu không dùng PATCH)
   const handleCancelBooking = async (id: number) => {
-    if (!window.confirm("Bạn có chắc chắn muốn hủy đặt bàn này?")) return;
-
-    setLoading(true);
-    setError("");
-    try {
-      await apiClient.put(`/api/bookings/${id}/cancel`);
-      loadBookings();
-    } catch (err: any) {
-      console.error("Error cancelling booking:", err);
-      setError(err.response?.data?.message || "Không thể hủy đặt bàn");
-    } finally {
-      setLoading(false);
-    }
+    handleUpdateBookingStatus(id, "Cancelled");
   };
 
-  // API 8: Hoàn thành đặt bàn
+  // API 8: Hoàn thành đặt bàn (fallback nếu không dùng PATCH)
   const handleCompleteBooking = async (id: number) => {
-    if (!window.confirm("Xác nhận hoàn thành đặt bàn này?")) return;
+    handleUpdateBookingStatus(id, "Completed");
+  };
 
-    setLoading(true);
-    setError("");
-    try {
-      await apiClient.put(`/api/bookings/${id}/complete`);
-      loadBookings();
-    } catch (err: any) {
-      console.error("Error completing booking:", err);
-      setError(err.response?.data?.message || "Không thể hoàn thành đặt bàn");
-    } finally {
-      setLoading(false);
-    }
+  // API: Xác nhận đặt bàn
+  const handleConfirmBooking = async (id: number) => {
+    handleUpdateBookingStatus(id, "Confirmed");
   };
 
   // API 9: Xóa đặt bàn
@@ -170,10 +356,36 @@ const AdminBooking: React.FC = () => {
     setError("");
     try {
       const response = await apiClient.get(`/api/bookings/phone/${searchTerm}`);
-      setBookings(response.data);
+      const data = response.data;
+
+      // Extract bookings array from response
+      let bookingsData = [];
+      if (Array.isArray(data)) {
+        bookingsData = data;
+      } else if (data && Array.isArray(data.content)) {
+        bookingsData = data.content;
+      } else if (data && typeof data === "object") {
+        bookingsData = [data];
+      }
+
+      // Clean up the data to remove circular references
+      const cleanedBookings = bookingsData.map((booking: any) => ({
+        id: booking.id,
+        userId: booking.user?.id || booking.userId,
+        userName: booking.user?.fullName || booking.userName || "N/A",
+        tableId: booking.table?.id || booking.tableId,
+        tableName: booking.table?.name || booking.tableName || "N/A",
+        tableNumber: booking.table?.tableNumber || booking.tableNumber || 0,
+        bookingTime: booking.bookingTime,
+        numGuests: booking.numGuests,
+        status: booking.status,
+      }));
+
+      setBookings(cleanedBookings);
     } catch (err: any) {
       console.error("Error searching bookings:", err);
       setError(err.response?.data?.message || "Không tìm thấy đặt bàn");
+      setBookings([]);
     } finally {
       setLoading(false);
     }
@@ -186,6 +398,7 @@ const AdminBooking: React.FC = () => {
       bookingTime: booking.bookingTime,
       numGuests: booking.numGuests,
     });
+    setError("");
     setShowEditModal(true);
   };
 
@@ -234,7 +447,10 @@ const AdminBooking: React.FC = () => {
         <h1>Quản lý đặt bàn</h1>
         <button
           className="btn-add-booking"
-          onClick={() => setShowAddModal(true)}
+          onClick={() => {
+            setError("");
+            setShowAddModal(true);
+          }}
         >
           + Tạo đặt bàn mới
         </button>
@@ -278,7 +494,7 @@ const AdminBooking: React.FC = () => {
           <table>
             <thead>
               <tr>
-                <th>ID</th>
+                <th>STT</th>
                 <th>Khách hàng</th>
                 <th>Tên bàn</th>
                 <th>Số khách</th>
@@ -288,18 +504,18 @@ const AdminBooking: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredBookings.map((booking) => (
+              {filteredBookings.map((booking, index) => (
                 <tr key={booking.id}>
-                  <td>{booking.id}</td>
+                  <td>{index + 1}</td>
                   <td>{booking.userName}</td>
-                  <td>{booking.tableName}</td>
+                  <td>{`Số ${booking.tableNumber}`}</td>
                   <td>{booking.numGuests}</td>
                   <td>
                     {new Date(booking.bookingTime).toLocaleString("vi-VN")}
                   </td>
                   <td>
                     <span
-                      className="status-badge"
+                      className="booking-status-badge"
                       style={{
                         backgroundColor: getStatusColor(booking.status),
                       }}
@@ -312,34 +528,107 @@ const AdminBooking: React.FC = () => {
                       {booking.status === "Pending" && (
                         <>
                           <button
-                            className="btn-complete"
-                            onClick={() => handleCompleteBooking(booking.id)}
-                            title="Xác nhận hoàn thành"
+                            className="btn-confirm"
+                            onClick={() => handleConfirmBooking(booking.id)}
+                            title="Xác nhận đặt bàn"
+                            style={{
+                              backgroundColor: "#3b82f6",
+                              color: "white",
+                              border: "none",
+                              padding: "5px 10px",
+                              borderRadius: "4px",
+                              cursor: "pointer",
+                              marginRight: "5px",
+                            }}
                           >
-                            ✓
+                            ✓ Xác nhận
                           </button>
                           <button
                             className="btn-cancel"
                             onClick={() => handleCancelBooking(booking.id)}
-                            title="Hủy"
+                            title="Hủy đặt bàn"
+                            style={{
+                              backgroundColor: "#ef4444",
+                              color: "white",
+                              border: "none",
+                              padding: "5px 10px",
+                              borderRadius: "4px",
+                              cursor: "pointer",
+                              marginRight: "5px",
+                            }}
                           >
-                            ✕
+                            ✕ Hủy
                           </button>
                         </>
                       )}
-                      <button
-                        className="btn-edit"
-                        onClick={() => openEditModal(booking)}
-                        disabled={loading}
-                      >
-                        Sửa
-                      </button>
+                      {booking.status === "Confirmed" && (
+                        <>
+                          <button
+                            className="btn-complete"
+                            onClick={() => handleCompleteBooking(booking.id)}
+                            title="Đánh dấu hoàn thành"
+                            style={{
+                              backgroundColor: "#22c55e",
+                              color: "white",
+                              border: "none",
+                              padding: "5px 10px",
+                              borderRadius: "4px",
+                              cursor: "pointer",
+                              marginRight: "5px",
+                            }}
+                          >
+                            ✓ Hoàn thành
+                          </button>
+                          <button
+                            className="btn-cancel"
+                            onClick={() => handleCancelBooking(booking.id)}
+                            title="Hủy đặt bàn"
+                            style={{
+                              backgroundColor: "#ef4444",
+                              color: "white",
+                              border: "none",
+                              padding: "5px 10px",
+                              borderRadius: "4px",
+                              cursor: "pointer",
+                              marginRight: "5px",
+                            }}
+                          >
+                            ✕ Hủy
+                          </button>
+                        </>
+                      )}
+                      {booking.status === "Pending" && (
+                        <button
+                          className="btn-edit"
+                          onClick={() => openEditModal(booking)}
+                          disabled={loading}
+                          style={{
+                            backgroundColor: "#f59e0b",
+                            color: "white",
+                            border: "none",
+                            padding: "5px 10px",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                            marginRight: "5px",
+                          }}
+                        >
+                          ✏ Sửa
+                        </button>
+                      )}
                       <button
                         className="btn-delete"
                         onClick={() => handleDeleteBooking(booking.id)}
                         disabled={loading}
+                        style={{
+                          backgroundColor: "#6b7280",
+                          color: "white",
+                          border: "none",
+                          padding: "5px 10px",
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                        }}
                       >
-                        Xóa
+                        🗑 Xóa
                       </button>
                     </div>
                   </td>
@@ -369,6 +658,11 @@ const AdminBooking: React.FC = () => {
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>Tạo đặt bàn mới</h2>
+            {error && (
+              <div className="error-message" style={{ marginBottom: "15px" }}>
+                {error}
+              </div>
+            )}
             <form onSubmit={handleAddBooking}>
               <div className="form-group">
                 <label>ID người dùng:</label>
@@ -447,6 +741,11 @@ const AdminBooking: React.FC = () => {
         <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>Sửa đặt bàn #{selectedBooking.id}</h2>
+            {error && (
+              <div className="error-message" style={{ marginBottom: "15px" }}>
+                {error}
+              </div>
+            )}
             <form onSubmit={handleUpdateBooking}>
               <div className="form-group">
                 <label>Số bàn:</label>

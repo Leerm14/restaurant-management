@@ -1,14 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import "./Menu.css";
 import MenuCard from "../../../components/MenuCard.tsx";
 import MenuCardHighlight from "../../../components/MenuCardHighlight.tsx";
 import Button from "../../../components/Button.tsx";
-import {
-  getAllMenu,
-  getMenuByCategory,
-  MenuItem,
-} from "../../../services/mockData.ts";
+import apiClient from "../../../services/api";
+import { useCart } from "../../../contexts/CartContext";
+
+interface MenuItem {
+  id: number;
+  name: string;
+  price: number;
+  category: string;
+  status: "available" | "unavailable";
+  image: string;
+  description?: string;
+}
 
 interface Category {
   id: string;
@@ -17,21 +24,88 @@ interface Category {
 
 const Menu: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const allMenu: MenuItem[] = getAllMenu();
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([
+    { id: "all", name: "T\u1ea5t c\u1ea3" },
+  ]);
+  const [loading, setLoading] = useState(false);
+  const { addToCart } = useCart();
+
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await apiClient.get("/api/categories");
+        const cats: Category[] = response.data.map((cat: any) => ({
+          id: cat.id.toString(),
+          name: cat.name,
+        }));
+        setCategories([{ id: "all", name: "Tất cả" }, ...cats]);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // Fetch menu items
+  useEffect(() => {
+    const fetchMenuItems = async () => {
+      setLoading(true);
+      try {
+        let response;
+        if (selectedCategory !== "all") {
+          response = await apiClient.get(
+            `/api/menu/category/${selectedCategory}`,
+            {
+              params: {
+                page: 0,
+                size: 100,
+              },
+            }
+          );
+        } else {
+          response = await apiClient.get("/api/menu", {
+            params: {
+              available: true,
+              page: 0,
+              size: 100,
+            },
+          });
+        }
+
+        const items: MenuItem[] = response.data.map((item: any) => ({
+          id: item.id.toString(),
+          name: item.name,
+          price: item.price,
+          category: item.category?.name || "Khác",
+          status: item.status?.toLowerCase() as "available" | "unavailable",
+          image:
+            item.imageUrl ||
+            "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop",
+          description: item.description || "",
+        }));
+        setMenuItems(items);
+      } catch (error) {
+        console.error("Error fetching menu items:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMenuItems();
+  }, [selectedCategory]);
 
   // Lấy menu theo category
   const getFilteredMenu = (): MenuItem[] => {
-    if (selectedCategory === "all") {
-      return allMenu;
-    }
-    return getMenuByCategory(selectedCategory);
+    return menuItems.filter((item) => item.status === "available");
   };
 
   // Lấy 3 món nổi bật đầu tiên
-  const featuredMenu: MenuItem[] = allMenu.slice(0, 3);
+  const filteredMenu = getFilteredMenu();
+  const featuredMenu: MenuItem[] = filteredMenu.slice(0, 3);
 
   // Lấy menu thường (từ món thứ 4 trở đi)
-  const regularMenu: MenuItem[] = getFilteredMenu().slice(3);
+  const regularMenu: MenuItem[] = filteredMenu.slice(3);
 
   // Xử lý thêm vào giỏ hàng
   const handleAddToCart = (item: {
@@ -39,8 +113,16 @@ const Menu: React.FC = () => {
     price: string;
     image: string;
   }) => {
-    console.log("Đã thêm vào giỏ hàng:", item);
-    alert(`Đã thêm ${item.title} vào giỏ hàng!`);
+    const menuItem = menuItems.find((m) => m.name === item.title);
+    if (menuItem) {
+      addToCart({
+        id: menuItem.id,
+        name: menuItem.name,
+        price: menuItem.price,
+        image: menuItem.image,
+      });
+      alert(`Đã thêm ${item.title} vào giỏ hàng!`);
+    }
   };
 
   // Xử lý scroll đến full menu section
@@ -53,16 +135,6 @@ const Menu: React.FC = () => {
       });
     }
   };
-
-  // Categories cho filter
-  const categories: Category[] = [
-    { id: "all", name: "Tất cả" },
-    { id: "Hải sản", name: "Hải sản" },
-    { id: "Salad", name: "Salad" },
-    { id: "Lẩu", name: "Lẩu" },
-    { id: "Món chính", name: "Món chính" },
-    { id: "Đồ uống", name: "Đồ uống" },
-  ];
 
   return (
     <div className="menu-page">
@@ -83,7 +155,7 @@ const Menu: React.FC = () => {
 
             {/* Featured dishes circles */}
             <div className="hero-dishes">
-              {allMenu.slice(0, 6).map((dish, index) => (
+              {menuItems.slice(0, 6).map((dish, index) => (
                 <div
                   key={dish.id}
                   className={`hero-dish hero-dish-${index + 1}`}
@@ -101,17 +173,39 @@ const Menu: React.FC = () => {
         <div className="container">
           <h2 className="section-title">Món Nổi Bật</h2>
           <div className="menu-grid-highlight">
-            {featuredMenu.map((menuItem) => (
-              <MenuCardHighlight
-                key={menuItem.id}
-                image={menuItem.image}
-                title={menuItem.name}
-                description={menuItem.description}
-                price={menuItem.price}
-                alt={menuItem.name}
-                onAddToCart={handleAddToCart}
-              />
-            ))}
+            {loading ? (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "40px",
+                  gridColumn: "1 / -1",
+                }}
+              >
+                Đang tải...
+              </div>
+            ) : featuredMenu.length > 0 ? (
+              featuredMenu.map((menuItem) => (
+                <MenuCardHighlight
+                  key={menuItem.id}
+                  image={menuItem.image}
+                  title={menuItem.name}
+                  description={menuItem.description || ""}
+                  price={menuItem.price.toString()}
+                  alt={menuItem.name}
+                  onAddToCart={handleAddToCart}
+                />
+              ))
+            ) : (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "40px",
+                  gridColumn: "1 / -1",
+                }}
+              >
+                Không có món nổi bật
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -138,17 +232,39 @@ const Menu: React.FC = () => {
 
           {/* Menu Grid */}
           <div className="menu-grid">
-            {regularMenu.map((menuItem) => (
-              <MenuCard
-                key={menuItem.id}
-                image={menuItem.image}
-                title={menuItem.name}
-                description={menuItem.description}
-                price={menuItem.price}
-                alt={menuItem.name}
-                onAddToCart={handleAddToCart}
-              />
-            ))}
+            {loading ? (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "40px",
+                  gridColumn: "1 / -1",
+                }}
+              >
+                Đang tải...
+              </div>
+            ) : regularMenu.length > 0 ? (
+              regularMenu.map((menuItem) => (
+                <MenuCard
+                  key={menuItem.id}
+                  image={menuItem.image}
+                  title={menuItem.name}
+                  description={menuItem.description || ""}
+                  price={menuItem.price.toString()}
+                  alt={menuItem.name}
+                  onAddToCart={handleAddToCart}
+                />
+              ))
+            ) : (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "40px",
+                  gridColumn: "1 / -1",
+                }}
+              >
+                Không có món ăn
+              </div>
+            )}
           </div>
         </div>
       </section>

@@ -1,28 +1,56 @@
-import React, { useState, ChangeEvent, FormEvent } from "react";
+import React, { useState, useEffect, FormEvent } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import "./Booking.css";
 import Button from "../../../components/Button.tsx";
+import apiClient from "../../../services/api";
+import { useAuth } from "../../../contexts/AuthContext";
 
 interface Table {
   id: number;
-  name: string;
-  status: "available" | "occupied";
-}
-
-interface CustomerInfo {
-  name: string;
-  phone: string;
-  note: string;
+  tableNumber: number;
+  capacity: number;
+  status: "Available" | "Booked" | "Used" | "Cleaning";
 }
 
 const Booking: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [selectedTable, setSelectedTable] = useState<number | null>(null);
-  const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
-    name: "",
-    phone: "",
-    note: "",
-  });
+  const [numGuests, setNumGuests] = useState<number>(2);
+  const [tables, setTables] = useState<Table[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const { userId } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const fromCart = location.state?.fromCart || false;
+
+  // Fetch tables from API
+  useEffect(() => {
+    const fetchTables = async () => {
+      try {
+        const response = await apiClient.get("/api/tables", {
+          params: { page: 0, size: 100 },
+        });
+        console.log(response.data);
+        const tablesData = Array.isArray(response.data)
+          ? response.data
+          : response.data.content || [];
+        const formattedTables: Table[] = tablesData.map((table: any) => ({
+          id: table.id,
+          tableNumber: table.tableNumber,
+          capacity: table.capacity || 4,
+          status: table.status,
+        }));
+        console.log(formattedTables);
+        setTables(formattedTables);
+      } catch (error) {
+        console.error("Error fetching tables:", error);
+        setError("Kh\u00f4ng th\u1ec3 t\u1ea3i danh s\u00e1ch b\u00e0n");
+      }
+    };
+    fetchTables();
+  }, []);
 
   // Time slots available
   const timeSlots: string[] = [
@@ -40,69 +68,138 @@ const Booking: React.FC = () => {
     "22:30",
   ];
 
-  // Table data with status
-  const tables: Table[] = [
-    { id: 1, name: "Bàn 1", status: "available" },
-    { id: 2, name: "Bàn 2", status: "available" },
-    { id: 3, name: "Bàn 3", status: "occupied" },
-    { id: 4, name: "Bàn 4", status: "available" },
-    { id: 5, name: "Bàn 5", status: "available" },
-    { id: 6, name: "Bàn 6", status: "occupied" },
-    { id: 7, name: "Bàn 7", status: "available" },
-    { id: 8, name: "Bàn 8", status: "available" },
-    { id: 9, name: "Bàn 9", status: "available" },
-    { id: 10, name: "Bàn 10", status: "occupied" },
-    { id: 11, name: "Bàn 11", status: "available" },
-    { id: 12, name: "Bàn 12", status: "available" },
-  ];
-
   // Handle table selection
   const handleTableSelect = (table: Table) => {
-    if (table.status === "available") {
+    if (table.status === "Available") {
       setSelectedTable(table.id);
     }
   };
 
-  // Handle form input changes
-  const handleInputChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setCustomerInfo((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  // Get status color
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Available":
+        return "#22c55e";
+      case "Booked":
+        return "#3b82f6";
+      case "Used":
+        return "#f59e0b";
+      case "Cleaning":
+        return "#ef4444";
+      default:
+        return "#6b7280";
+    }
+  };
+
+  // Get status text
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "Available":
+        return "Còn trống";
+      case "Booked":
+        return "Đã đặt";
+      case "Used":
+        return "Đang dùng";
+      case "Cleaning":
+        return "Dọn dẹp";
+      default:
+        return status;
+    }
   };
 
   // Handle form submission
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (
-      !selectedDate ||
-      !selectedTime ||
-      !selectedTable ||
-      !customerInfo.name ||
-      !customerInfo.phone
-    ) {
-      alert("Vui lòng điền đầy đủ thông tin!");
+    setError("");
+
+    // Validate required fields
+    if (!selectedDate) {
+      setError("Vui lòng chọn ngày đặt bàn");
       return;
     }
 
-    // Here you would typically send the booking data to your backend
-    console.log("Booking data:", {
-      date: selectedDate,
-      time: selectedTime,
-      table: selectedTable,
-      customer: customerInfo,
-    });
+    if (!selectedTime) {
+      setError("Vui lòng chọn giờ đặt bàn");
+      return;
+    }
 
-    alert("Đặt bàn thành công! Chúng tôi sẽ liên hệ với bạn sớm.");
+    if (!selectedTable) {
+      setError("Vui lòng chọn bàn");
+      return;
+    }
 
-    // Reset form
-    setSelectedDate("");
-    setSelectedTime("");
-    setSelectedTable(null);
-    setCustomerInfo({ name: "", phone: "", note: "" });
+    if (!userId) {
+      setError("Vui lòng đăng nhập để đặt bàn");
+      return;
+    }
+
+    if (numGuests < 1) {
+      setError("Số khách phải ít nhất là 1");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Combine date and time
+      const bookingDateTime = `${selectedDate}T${selectedTime}:00`;
+
+      // Validate booking time is in the future
+      const bookingDate = new Date(bookingDateTime);
+      const now = new Date();
+      if (bookingDate <= now) {
+        setError("Thời gian đặt bàn phải là thời điểm trong tương lai");
+        setLoading(false);
+        return;
+      }
+
+      const requestData = {
+        userId: Number(userId),
+        tableId: selectedTable,
+        bookingTime: bookingDateTime,
+        numGuests: numGuests,
+      };
+
+      await apiClient.post("/api/bookings", requestData);
+
+      alert("Đặt bàn thành công! Chúng tôi sẽ liên hệ với bạn sớm.");
+
+      // Reset form
+      setSelectedDate("");
+      setSelectedTime("");
+      setSelectedTable(null);
+      setNumGuests(2);
+
+      // Navigate back to cart if came from cart
+      if (fromCart) {
+        navigate("/cart");
+      }
+    } catch (err: any) {
+      console.error("Error creating booking:", err);
+      const errorMessage =
+        err.response?.data?.message || "Không thể tạo đặt bàn";
+
+      // Translate common error messages
+      if (errorMessage.includes("not available")) {
+        setError("Bàn này đã được đặt. Vui lòng chọn bàn khác.");
+      } else if (errorMessage.includes("capacity")) {
+        setError(
+          "Số khách vượt quá sức chứa của bàn. Vui lòng chọn bàn lớn hơn."
+        );
+      } else if (errorMessage.includes("already booked")) {
+        setError(
+          "Thời gian này đã có người đặt. Vui lòng chọn thời gian khác."
+        );
+      } else if (errorMessage.includes("future")) {
+        setError("Thời gian đặt bàn phải là thời điểm trong tương lai.");
+      } else if (errorMessage.includes("user")) {
+        setError("Không tìm thấy người dùng. Vui lòng đăng nhập lại.");
+      } else {
+        setError(errorMessage);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -116,30 +213,49 @@ const Booking: React.FC = () => {
           </p>
         </div>
 
+        {error && (
+          <div
+            style={{
+              padding: "1rem",
+              marginBottom: "1rem",
+              backgroundColor: "#fee",
+              border: "1px solid #fcc",
+              borderRadius: "4px",
+              color: "#c00",
+            }}
+          >
+            {error}
+          </div>
+        )}
+
         <form className="booking-form" onSubmit={handleSubmit}>
           {/* Date Selection */}
-          <div className="form-section">
-            <h3 className="section-title">Chọn ngày</h3>
-            <div className="date-input">
+          <div className="booking-form-section">
+            <h3 className="booking-section-title">
+              Chọn ngày <span style={{ color: "#ef4444" }}>*</span>
+            </h3>
+            <div className="booking-date-input">
               <input
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 min={new Date().toISOString().split("T")[0]}
-                className="date-picker"
+                className="booking-date-picker"
               />
             </div>
           </div>
 
           {/* Time Selection */}
-          <div className="form-section">
-            <h3 className="section-title">Chọn giờ</h3>
-            <div className="time-slots">
+          <div className="booking-form-section">
+            <h3 className="booking-section-title">
+              Chọn giờ <span style={{ color: "#ef4444" }}>*</span>
+            </h3>
+            <div className="booking-time-slots">
               {timeSlots.map((time) => (
                 <button
                   key={time}
                   type="button"
-                  className={`time-slot ${
+                  className={`booking-time-slot ${
                     selectedTime === time ? "selected" : ""
                   }`}
                   onClick={() => setSelectedTime(time)}
@@ -151,71 +267,82 @@ const Booking: React.FC = () => {
           </div>
 
           {/* Table Selection */}
-          <div className="form-section">
-            <h3 className="section-title">Chọn bàn</h3>
-            <div className="tables-grid">
-              {tables.map((table) => (
-                <div
-                  key={table.id}
-                  className={`table-item ${table.status} ${
-                    selectedTable === table.id ? "selected" : ""
-                  }`}
-                  onClick={() => handleTableSelect(table)}
+          <div className="booking-form-section">
+            <h3 className="booking-section-title">
+              Chọn bàn <span style={{ color: "#ef4444" }}>*</span>
+            </h3>
+            <div className="booking-tables-grid">
+              {tables.length === 0 ? (
+                <p
+                  style={{
+                    gridColumn: "1 / -1",
+                    textAlign: "center",
+                    color: "#7f8c8d",
+                  }}
                 >
-                  <div className="table-icon">🪑</div>
-                  <span className="table-name">{table.name}</span>
-                  <span className="table-status">
-                    {table.status === "available" ? "Còn trống" : "Đã có khách"}
-                  </span>
-                </div>
-              ))}
+                  Không có bàn nào. Vui lòng liên hệ nhà hàng.
+                </p>
+              ) : (
+                tables.map((table) => (
+                  <div
+                    key={table.id}
+                    className={`booking-table-item ${
+                      table.status === "Available" ? "available" : "occupied"
+                    } ${selectedTable === table.id ? "selected" : ""}`}
+                    onClick={() => handleTableSelect(table)}
+                    style={{
+                      borderColor: getStatusColor(table.status),
+                      cursor:
+                        table.status === "Available"
+                          ? "pointer"
+                          : "not-allowed",
+                      opacity: table.status === "Available" ? 1 : 0.6,
+                    }}
+                  >
+                    <div className="booking-table-icon">🪑</div>
+                    <span className="booking-table-name">
+                      Bàn số {table.tableNumber}
+                    </span>
+                    <span
+                      className="booking-table-status"
+                      style={{ color: getStatusColor(table.status) }}
+                    >
+                      {getStatusText(table.status)}
+                    </span>
+                    <span style={{ fontSize: "0.85rem", opacity: 0.7 }}>
+                      {table.capacity} người
+                    </span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
           {/* Customer Information */}
-          <div className="form-section">
-            <h3 className="section-title">Thông tin của bạn</h3>
-            <div className="customer-info">
-              <div className="form-group">
-                <label>Tên của bạn</label>
+          <div className="booking-form-section">
+            <h3 className="booking-section-title">Thông tin đặt bàn</h3>
+            <div className="booking-customer-info">
+              <div className="booking-form-group">
+                <label>
+                  Số khách <span style={{ color: "#ef4444" }}>*</span>
+                </label>
                 <input
-                  type="text"
-                  name="name"
-                  value={customerInfo.name}
-                  onChange={handleInputChange}
-                  placeholder="Nhập tên của bạn"
+                  type="number"
+                  value={numGuests}
+                  onChange={(e) => setNumGuests(Number(e.target.value))}
+                  min="1"
+                  max="20"
                   required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Số điện thoại</label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={customerInfo.phone}
-                  onChange={handleInputChange}
-                  placeholder="0123 456 789"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Yêu cầu đặc biệt (tùy chọn)</label>
-                <textarea
-                  name="note"
-                  value={customerInfo.note}
-                  onChange={handleInputChange}
-                  placeholder="Ví dụ: Bàn gần cửa sổ, không gian riêng tư, thích từng bước thức..."
-                  rows={3}
                 />
               </div>
             </div>
           </div>
 
           {/* Submit Button */}
-          <div className="form-submit">
-            <Button variant="primary">✓ Xác nhận đặt bàn</Button>
+          <div className="booking-form-submit">
+            <Button variant="primary" disabled={loading}>
+              {loading ? "Đang xử lý..." : "✓ Xác nhận đặt bàn"}
+            </Button>
           </div>
         </form>
       </div>

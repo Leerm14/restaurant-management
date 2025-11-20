@@ -9,6 +9,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 30px;
+  flex-direction: column;
 }
 
 .booking-header h1 {
@@ -168,74 +169,82 @@
   background: #f9fafb;
 }
 
-.status-badge {
-  padding: 6px 12px;
-  border-radius: 20px;
+.booking-status-badge {
+  padding: 6px 16px;
+  border-radius: 6px;
   color: white;
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   font-weight: 600;
   display: inline-block;
+  text-align: center;
+  min-width: 100px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  letter-spacing: 0.3px;
+  text-transform: capitalize;
 }
 
 .action-buttons {
   display: flex;
-  gap: 8px;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .action-buttons button {
-  padding: 6px 12px;
+  padding: 8px 14px;
   border: none;
   border-radius: 6px;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.action-buttons button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .btn-edit {
-  background: #3b82f6;
-  color: white;
+  background: #f59e0b !important;
+  color: white !important;
 }
 
 .btn-edit:hover:not(:disabled) {
-  background: #2563eb;
+  background: #d97706 !important;
 }
 
 .btn-delete {
-  background: #ef4444;
-  color: white;
+  background: #6b7280 !important;
+  color: white !important;
 }
 
 .btn-delete:hover:not(:disabled) {
-  background: #dc2626;
+  background: #4b5563 !important;
 }
 
-.btn-complete {
-  background: #22c55e;
-  color: white;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.btn-complete,
+.btn-confirm {
+  background: #22c55e !important;
+  color: white !important;
 }
 
-.btn-complete:hover {
-  background: #16a34a;
+.btn-complete:hover,
+.btn-confirm:hover {
+  background: #16a34a !important;
 }
 
 .btn-cancel {
-  background: #f59e0b;
-  color: white;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: #ef4444 !important;
+  color: white !important;
 }
 
 .btn-cancel:hover {
-  background: #d97706;
+  background: #dc2626 !important;
 }
 
 .action-buttons button:disabled {

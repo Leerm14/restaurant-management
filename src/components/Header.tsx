@@ -3,12 +3,14 @@ import { Link, useNavigate } from "react-router-dom";
 import "./Components.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { useAuth } from "../contexts/AuthContext";
+import { useCart } from "../contexts/CartContext";
 import { auth } from "../firebaseConfig";
 import { signOut } from "firebase/auth";
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, logout } = useAuth();
+  const { getTotalItems } = useCart();
 
   const handleLogout = async () => {
     try {
@@ -43,8 +45,12 @@ const Header: React.FC = () => {
             <Link to="/order-history" className="nav-link">
               Lịch sử đơn hàng
             </Link>
-            <Link to="/profile" className="nav-link">
-              Thông tin cá nhân
+            <Link to="/cart" className="nav-link cart-link">
+              <i className="fa-solid fa-shopping-cart"></i>
+              Giỏ hàng
+              {getTotalItems() > 0 && (
+                <span className="cart-badge">{getTotalItems()}</span>
+              )}
             </Link>
           </nav>
 
