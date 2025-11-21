@@ -47,9 +47,11 @@ const MenuCardHighlight: React.FC<MenuCardHighlightProps> = ({
         <p>{description}</p>
         <div className="price-action-highlight">
           <span className="price-highlight">{formatPrice(price)}</span>
-          <Button variant="primary" onClick={handleAddToCart}>
-            Thêm vào giỏ
-          </Button>
+          {onAddToCart && (
+            <Button variant="primary" onClick={handleAddToCart}>
+              Thêm vào giỏ
+            </Button>
+          )}
         </div>
       </div>
     </div>

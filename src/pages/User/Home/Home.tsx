@@ -3,7 +3,6 @@ import "./Home.css";
 import Button from "../../../components/Button.tsx";
 import MenuCardHighlight from "../../../components/MenuCardHighlight.tsx";
 import { Link } from "react-router-dom";
-import { useCart } from "../../../contexts/CartContext";
 import chefImage from "../../../assets/home/chef.png";
 
 interface MenuItem {
@@ -17,8 +16,6 @@ interface MenuItem {
 }
 
 const Home: React.FC = () => {
-  const { addToCart } = useCart();
-
   const featuredMenu: MenuItem[] = [
     {
       id: 1,
@@ -54,23 +51,6 @@ const Home: React.FC = () => {
         "Gỏi cuốn tươi ngon với tôm, thịt ba chỉ, rau thơm và bún tươi",
     },
   ];
-
-  const handleAddToCart = (item: {
-    title: string;
-    price: string;
-    image: string;
-  }) => {
-    const menuItem = featuredMenu.find((m) => m.name === item.title);
-    if (menuItem) {
-      addToCart({
-        id: menuItem.id,
-        name: menuItem.name,
-        price: menuItem.price,
-        image: menuItem.image,
-      });
-      alert(`Đã thêm ${item.title} vào giỏ hàng!`);
-    }
-  };
 
   return (
     <div className="home">
@@ -137,7 +117,6 @@ const Home: React.FC = () => {
                 price={menuItem.price}
                 category={menuItem.category}
                 alt={menuItem.name}
-                onAddToCart={handleAddToCart}
               />
             ))}
           </div>
