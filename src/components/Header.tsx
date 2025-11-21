@@ -6,6 +6,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useCart } from "../contexts/CartContext";
 import { auth } from "../firebaseConfig";
 import { signOut } from "firebase/auth";
+import logo from "../assets/logo.svg";
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -26,12 +27,10 @@ const Header: React.FC = () => {
     <header className="header">
       <div className="header-container">
         <div className="header-content">
-          {/* Logo */}
           <div className="logo">
-            <img src="./src/assets/logo.svg" alt="Logo" />
+            <img src={logo} alt="Logo" />
           </div>
 
-          {/* Navigation Menu */}
           <nav className="nav-menu">
             <Link to="/" className="nav-link">
               Trang chủ
@@ -54,7 +53,6 @@ const Header: React.FC = () => {
             </Link>
           </nav>
 
-          {/* Account Button */}
           <div className="account-section">
             {isAuthenticated ? (
               <button onClick={handleLogout} className="account-button">

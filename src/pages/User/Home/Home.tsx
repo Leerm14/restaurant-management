@@ -72,7 +72,6 @@ const Home: React.FC = () => {
 
   return (
     <div className="home">
-      {/* Hero Section */}
       <section className="hero-section">
         <div className="hero-overlay">
           <div className="hero-content">
@@ -87,7 +86,6 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* About Section */}
       <section className="about-section">
         <div className="container">
           <div className="about-content">
@@ -124,7 +122,6 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Menu Preview Section */}
       <section className="menu-preview">
         <div className="container">
           <h2 className="section-title">Thực Đơn Nổi Bật</h2>
@@ -167,7 +164,6 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Newsletter Section */}
       <section className="newsletter-section">
         <div className="container">
           <div className="newsletter-content">

@@ -10,9 +10,7 @@ const PaymentSuccess: React.FC = () => {
   const amount = searchParams.get("amount");
   const transactionId = searchParams.get("transactionId");
 
-  useEffect(() => {
-    // Có thể gọi API để xác nhận thanh toán ở đây nếu cần
-  }, []);
+  useEffect(() => {}, []);
 
   const formatCurrency = (amount: string | null) => {
     if (!amount) return "0đ";

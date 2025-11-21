@@ -84,7 +84,6 @@ function AppRoutes(): React.ReactElement {
           }
         />
 
-        {/* Main Routes */}
         <Route
           path="/*"
           element={

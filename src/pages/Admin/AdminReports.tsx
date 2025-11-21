@@ -172,7 +172,6 @@ const AdminReports: React.FC = () => {
         </div>
       )}
 
-      {/* Bộ lọc tháng cho đơn hàng */}
       <div
         style={{
           background: "white",
@@ -379,7 +378,6 @@ const AdminReports: React.FC = () => {
         </div>
       )}
 
-      {/* Bộ lọc ngày tháng cho doanh thu */}
       <div
         style={{
           background: "white",
@@ -455,7 +453,6 @@ const AdminReports: React.FC = () => {
       ) : (
         revenueReport && (
           <div style={{ marginBottom: "40px" }}>
-            {/* Cards thống kê */}
             <div
               style={{
                 display: "grid",
@@ -537,7 +534,6 @@ const AdminReports: React.FC = () => {
               </div>
             </div>
 
-            {/* Thống kê theo phương thức thanh toán */}
             <div
               style={{
                 background: "white",
@@ -556,7 +552,6 @@ const AdminReports: React.FC = () => {
                   gap: "20px",
                 }}
               >
-                {/* Tiền mặt */}
                 <div
                   style={{
                     padding: "20px",
@@ -598,7 +593,6 @@ const AdminReports: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Thẻ tín dụng */}
                 <div
                   style={{
                     padding: "20px",
@@ -640,7 +634,6 @@ const AdminReports: React.FC = () => {
                   </div>
                 </div>
 
-                {/* QR Code */}
                 <div
                   style={{
                     padding: "20px",
@@ -687,7 +680,6 @@ const AdminReports: React.FC = () => {
         )
       )}
 
-      {/* Món ăn bán chạy */}
       <div>
         <div
           style={{

@@ -342,7 +342,6 @@ const AdminAccounts: React.FC = () => {
         </table>
       </div>
 
-      {/* Add User Modal */}
       {isAddModalOpen && (
         <div className="modal-overlay" onClick={handleCloseModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -440,7 +439,6 @@ const AdminAccounts: React.FC = () => {
         </div>
       )}
 
-      {/* Edit User Modal */}
       {isEditModalOpen && (
         <div className="modal-overlay" onClick={handleCloseEditModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>

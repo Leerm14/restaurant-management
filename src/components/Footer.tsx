@@ -6,9 +6,7 @@ const Footer: React.FC = () => {
   return (
     <footer className="footer">
       <div className="footer-container">
-        {/* Top Section with Nav and Social */}
         <div className="footer-top">
-          {/* Navigation Links */}
           <div className="footer-nav">
             <a href="#" className="footer-nav-link">
               Sản phẩm
@@ -18,7 +16,6 @@ const Footer: React.FC = () => {
             </a>
           </div>
 
-          {/* Social Media Icons */}
           <div className="footer-social">
             <a href="#" className="footer-social-link">
               <i className="fab fa-facebook-f"></i>
