@@ -164,6 +164,25 @@ const Booking: React.FC = () => {
 
       alert("Đặt bàn thành công! Chúng tôi sẽ liên hệ với bạn sớm.");
 
+      // Refresh table status after booking
+      try {
+        const response = await apiClient.get("/api/tables", {
+          params: { page: 0, size: 100 },
+        });
+        const tablesData = Array.isArray(response.data)
+          ? response.data
+          : response.data.content || [];
+        const formattedTables: Table[] = tablesData.map((table: any) => ({
+          id: table.id,
+          tableNumber: table.tableNumber,
+          capacity: table.capacity || 4,
+          status: table.status,
+        }));
+        setTables(formattedTables);
+      } catch (refreshError) {
+        console.error("Error refreshing tables:", refreshError);
+      }
+
       // Reset form
       setSelectedDate("");
       setSelectedTime("");

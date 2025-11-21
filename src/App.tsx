@@ -10,6 +10,8 @@ import Cart from "./pages/User/Cart/Cart.tsx";
 import Sign from "./pages/Auth/Sign.tsx";
 import ResetPassword from "./pages/Auth/reset.tsx";
 import OrderHistory from "./pages/User/OrderHistory/OrderHistory.tsx";
+import PaymentSuccess from "./pages/User/PaymentSuccess/PaymentSuccess.tsx";
+import PaymentFailed from "./pages/User/PaymentFailed/PaymentFailed.tsx";
 import ProtectRouter from "./pages/protectrouter.tsx";
 import AdminMenuManagement from "./pages/Admin/AdminMenuManagement.tsx";
 import AdminAccounts from "./pages/Admin/AdminAccounts.tsx";
@@ -133,6 +135,8 @@ function AppRoutes(): React.ReactElement {
                     </ProtectRouter>
                   }
                 />
+                <Route path="/payment-success" element={<PaymentSuccess />} />
+                <Route path="/payment-failed" element={<PaymentFailed />} />
               </Routes>
             </MainLayout>
           }

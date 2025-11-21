@@ -108,6 +108,12 @@
 }
 
 /* Action Button */
+.action-buttons-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .action-button {
   background: transparent;
   border: none;
@@ -115,7 +121,7 @@
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  padding: 4px 8px;
+  padding: 6px 12px;
   border-radius: 4px;
   transition: all 0.2s ease;
 }
@@ -123,6 +129,38 @@
 .action-button:hover {
   background-color: #e3f2fd;
   color: #0056b3;
+}
+
+.action-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.action-button.view-btn {
+  color: #007bff;
+}
+
+.action-button.view-btn:hover {
+  background-color: #e3f2fd;
+  color: #0056b3;
+}
+
+.action-button.edit-btn {
+  color: #28a745;
+}
+
+.action-button.edit-btn:hover {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.action-button.cancel-btn {
+  color: #dc3545;
+}
+
+.action-button.cancel-btn:hover {
+  background-color: #f8d7da;
+  color: #721c24;
 }
 
 /* Empty State */
@@ -274,6 +312,105 @@
 
 .order-total-detail strong {
   color: #2c3e50;
+}
+
+/* Edit Warning */
+.edit-warning {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-top: 10px;
+}
+
+/* Quantity Controls in Modal */
+.quantity-controls-modal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.qty-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #dee2e6;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  color: #495057;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qty-btn:hover:not(:disabled) {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.qty-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.qty-display {
+  min-width: 30px;
+  text-align: center;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+/* Modal Actions */
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e9ecef;
+}
+
+.save-btn {
+  flex: 1;
+  padding: 12px 24px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.save-btn:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cancel-edit-btn {
+  flex: 1;
+  padding: 12px 24px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-edit-btn:hover {
+  background-color: #5a6268;
 }
 
 /* Order Type */
