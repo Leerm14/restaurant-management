@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import "./Home.css";
 import Button from "../../../components/Button.tsx";
 import MenuCardHighlight from "../../../components/MenuCardHighlight.tsx";
 import { Link } from "react-router-dom";
-import apiClient from "../../../services/api";
 import { useCart } from "../../../contexts/CartContext";
+import chefImage from "../../../assets/home/chef.png";
 
 interface MenuItem {
   id: number;
@@ -17,41 +17,43 @@ interface MenuItem {
 }
 
 const Home: React.FC = () => {
-  const [featuredMenu, setFeaturedMenu] = useState<MenuItem[]>([]);
-  const [loading, setLoading] = useState(false);
   const { addToCart } = useCart();
-  useEffect(() => {
-    const fetchFeaturedMenu = async () => {
-      setLoading(true);
-      try {
-        const response = await apiClient.get("/api/menu", {
-          params: {
-            available: true,
-            page: 0,
-            size: 3,
-          },
-        });
 
-        const items: MenuItem[] = response.data.map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          category: item.category?.name,
-          status: item.status?.toLowerCase() as "available" | "unavailable",
-          image:
-            item.imageUrl ||
-            "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop",
-          description: item.description || "",
-        }));
-        setFeaturedMenu(items);
-      } catch (error) {
-        console.error("Error fetching featured menu:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchFeaturedMenu();
-  }, []);
+  const featuredMenu: MenuItem[] = [
+    {
+      id: 1,
+      name: "Phở Bò Đặc Biệt",
+      price: 65000,
+      category: "Món Chính",
+      status: "available",
+      image:
+        "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=800&h=600&fit=crop",
+      description:
+        "Phở bò truyền thống với nước dùng hầm xương 12 tiếng, thịt bò tươi ngon",
+    },
+    {
+      id: 2,
+      name: "Bún Chả Hà Nội",
+      price: 55000,
+      category: "Món Chính",
+      status: "available",
+      image:
+        "https://images.unsplash.com/photo-1559314809-0d155014e29e?w=800&h=600&fit=crop",
+      description:
+        "Bún chả Hà Nội chính gốc với chả nướng thơm phức, nước mắm chua ngọt đặc trưng",
+    },
+    {
+      id: 3,
+      name: "Gỏi Cuốn Tôm Thịt",
+      price: 45000,
+      category: "Khai Vị",
+      status: "available",
+      image:
+        "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=800&h=600&fit=crop",
+      description:
+        "Gỏi cuốn tươi ngon với tôm, thịt ba chỉ, rau thơm và bún tươi",
+    },
+  ];
 
   const handleAddToCart = (item: {
     title: string;
@@ -100,7 +102,7 @@ const Home: React.FC = () => {
 
             <div className="chef-story">
               <div className="chef-image">
-                <img src="/src/assets/home/chef.png" alt="Chef" />
+                <img src={chefImage} alt="Chef" />
               </div>
               <div className="chef-content">
                 <h3>Câu Chuyện Của Chúng Tôi</h3>
@@ -126,40 +128,18 @@ const Home: React.FC = () => {
         <div className="container">
           <h2 className="section-title">Thực Đơn Nổi Bật</h2>
           <div className="menu-grid-highlight">
-            {loading ? (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "40px",
-                  gridColumn: "1 / -1",
-                }}
-              >
-                Đang tải...
-              </div>
-            ) : featuredMenu.length > 0 ? (
-              featuredMenu.map((menuItem) => (
-                <MenuCardHighlight
-                  key={menuItem.id}
-                  image={menuItem.image}
-                  title={menuItem.name}
-                  description={menuItem.description || ""}
-                  price={menuItem.price}
-                  category={menuItem.category}
-                  alt={menuItem.name}
-                  onAddToCart={handleAddToCart}
-                />
-              ))
-            ) : (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "40px",
-                  gridColumn: "1 / -1",
-                }}
-              >
-                Không có món nổi bật
-              </div>
-            )}
+            {featuredMenu.map((menuItem) => (
+              <MenuCardHighlight
+                key={menuItem.id}
+                image={menuItem.image}
+                title={menuItem.name}
+                description={menuItem.description || ""}
+                price={menuItem.price}
+                category={menuItem.category}
+                alt={menuItem.name}
+                onAddToCart={handleAddToCart}
+              />
+            ))}
           </div>
         </div>
       </section>
