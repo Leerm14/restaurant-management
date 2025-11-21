@@ -39,13 +39,18 @@ const AdminMenuManagement: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
+  const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState(false);
   const [newCategory, setNewCategory] = useState({
+    name: "",
+  });
+  const [editCategory, setEditCategory] = useState({
+    id: "",
     name: "",
   });
   const [newItem, setNewItem] = useState({
     name: "",
     price: "",
-    category: "Mon chinh",
+    category: "",
     status: "available" as "available" | "unavailable",
     description: "",
     image: "",
@@ -196,7 +201,7 @@ const AdminMenuManagement: React.FC = () => {
     setNewItem({
       name: "",
       price: "",
-      category: "Mon chinh",
+      category: "",
       status: "available",
       description: "",
       image: "",
@@ -207,6 +212,10 @@ const AdminMenuManagement: React.FC = () => {
   const handleSaveNewItem = async () => {
     if (!newItem.name || !newItem.price) {
       alert("Vui lòng nhập tên món và giá!");
+      return;
+    }
+    if (!newItem.category) {
+      alert("Vui lòng chọn danh mục!");
       return;
     }
 
@@ -286,6 +295,72 @@ const AdminMenuManagement: React.FC = () => {
 
   const handleCategoryInputChange = (field: string, value: string) => {
     setNewCategory((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleDeleteCategory = async (categoryId: string) => {
+    if (
+      window.confirm(
+        "Bạn có chắc chắn muốn xóa danh mục này? Các món ăn thuộc danh mục này sẽ cần được cập nhật lại."
+      )
+    ) {
+      try {
+        await apiClient.delete(`/api/categories/${categoryId}`);
+        alert("Xóa danh mục thành công!");
+        setRefreshCategories((prev) => prev + 1);
+        if (selectedCategory === categoryId) {
+          setSelectedCategory("all");
+        }
+      } catch (error) {
+        console.error("Error deleting category:", error);
+        alert("Có lỗi xảy ra khi xóa danh mục!");
+      }
+    }
+  };
+
+  const handleEditCategory = (category: Category) => {
+    setEditCategory({
+      id: category.id,
+      name: category.name,
+    });
+    setIsEditCategoryModalOpen(true);
+  };
+
+  const handleCloseEditCategoryModal = () => {
+    setIsEditCategoryModalOpen(false);
+    setEditCategory({
+      id: "",
+      name: "",
+    });
+  };
+
+  const handleSaveEditCategory = async () => {
+    if (!editCategory.name.trim()) {
+      alert("Vui lòng nhập tên danh mục!");
+      return;
+    }
+
+    try {
+      const updatedCategoryData = {
+        name: editCategory.name,
+      };
+      await apiClient.put(
+        `/api/categories/${editCategory.id}`,
+        updatedCategoryData
+      );
+      alert("Cập nhật danh mục thành công!");
+      handleCloseEditCategoryModal();
+      setRefreshCategories((prev) => prev + 1);
+    } catch (error) {
+      console.error("Error updating category:", error);
+      alert("Có lỗi xảy ra khi cập nhật danh mục!");
+    }
+  };
+
+  const handleEditCategoryInputChange = (field: string, value: string) => {
+    setEditCategory((prev) => ({
       ...prev,
       [field]: value,
     }));
@@ -491,6 +566,28 @@ const AdminMenuManagement: React.FC = () => {
                 }}
               >
                 {category.name}
+                <div className="category-actions">
+                  <button
+                    className="edit-category-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditCategory(category);
+                    }}
+                    title="Sửa danh mục"
+                  >
+                    <i className="fas fa-edit"></i>
+                  </button>
+                  <button
+                    className="delete-category-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteCategory(category.id);
+                    }}
+                    title="Xóa danh mục"
+                  >
+                    <i className="fas fa-times"></i>
+                  </button>
+                </div>
               </button>
             ))}
 
@@ -618,13 +715,16 @@ const AdminMenuManagement: React.FC = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Danh mục</label>
+                  <label>
+                    Danh mục <span className="required">*</span>
+                  </label>
                   <select
                     value={newItem.category}
                     onChange={(e) =>
                       handleInputChange("category", e.target.value)
                     }
                   >
+                    <option value="">-- Chọn danh mục --</option>
                     {categories
                       .filter((cat) => cat.id !== "all")
                       .map((category) => (
@@ -741,6 +841,55 @@ const AdminMenuManagement: React.FC = () => {
               </button>
               <button className="btn-save" onClick={handleSaveNewCategory}>
                 <i className="fas fa-save"></i> Thêm danh mục
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isEditCategoryModalOpen && (
+        <div className="modal-overlay" onClick={handleCloseEditCategoryModal}>
+          <div
+            className="modal-content category-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h2>
+                <i className="fas fa-edit"></i> Chỉnh Sửa Danh Mục
+              </h2>
+              <button
+                className="modal-close-btn"
+                onClick={handleCloseEditCategoryModal}
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="form-group">
+                <label>
+                  Tên danh mục <span className="required">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: Món khai vị, Món nướng..."
+                  value={editCategory.name}
+                  onChange={(e) =>
+                    handleEditCategoryInputChange("name", e.target.value)
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button
+                className="btn-cancel"
+                onClick={handleCloseEditCategoryModal}
+              >
+                <i className="fas fa-times"></i> Hủy
+              </button>
+              <button className="btn-save" onClick={handleSaveEditCategory}>
+                <i className="fas fa-save"></i> Cập nhật
               </button>
             </div>
           </div>

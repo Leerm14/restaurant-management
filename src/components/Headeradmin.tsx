@@ -5,6 +5,7 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 import { useAuth } from "../contexts/AuthContext";
 import { auth } from "../firebaseConfig";
 import { signOut } from "firebase/auth";
+import logo from "../assets/logo.svg";
 
 const HeaderAdmin: React.FC = () => {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ const HeaderAdmin: React.FC = () => {
       <div className="header-container">
         <div className="header-content">
           <div className="logo">
-            <img src="./src/assets/logo.svg" alt="Logo" />
+            <img src={logo} alt="Logo" />
           </div>
           <div className="account-section">
             <button onClick={handleLogout} className="account-button">
