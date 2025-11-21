@@ -75,7 +75,7 @@ const Menu: React.FC = () => {
         }
 
         const items: MenuItem[] = response.data.map((item: any) => ({
-          id: item.id.toString(),
+          id: item.id,
           name: item.name,
           price: item.price,
           category: item.category?.name || "Khác",
@@ -190,7 +190,8 @@ const Menu: React.FC = () => {
                   image={menuItem.image}
                   title={menuItem.name}
                   description={menuItem.description || ""}
-                  price={menuItem.price.toString()}
+                  price={menuItem.price}
+                  category={menuItem.category}
                   alt={menuItem.name}
                   onAddToCart={handleAddToCart}
                 />
@@ -249,7 +250,8 @@ const Menu: React.FC = () => {
                   image={menuItem.image}
                   title={menuItem.name}
                   description={menuItem.description || ""}
-                  price={menuItem.price.toString()}
+                  price={menuItem.price}
+                  category={menuItem.category}
                   alt={menuItem.name}
                   onAddToCart={handleAddToCart}
                 />

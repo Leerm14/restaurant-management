@@ -355,96 +355,181 @@
 
 /* MenuCardHighlight Styles */
 .menu-item-highlight {
-  background: linear-gradient(135deg, #fff 0%, #f8f9ff 100%);
+  background: white;
   border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border: 3px solid #e8e9ff;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border: 2px solid #f0f0f0;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .menu-item-highlight::before {
-  content: "🌟 Nổi bật";
+  content: "⭐ Nổi bật";
   position: absolute;
-  top: 15px;
-  right: 15px;
-  background: linear-gradient(135deg, #ff6b6b, #ffd93d);
+  top: 20px;
+  right: 20px;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 50%, #f093fb 100%);
   color: white;
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  z-index: 2;
+  padding: 8px 16px;
+  border-radius: 25px;
+  font-size: 13px;
+  font-weight: 700;
+  z-index: 10;
+  box-shadow: 0 4px 15px rgba(238, 90, 111, 0.4);
+  letter-spacing: 0.5px;
 }
 
 .menu-item-highlight:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+  transform: translateY(-12px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  border-color: #e8e9ff;
 }
 
 .menu-image-highlight {
-  height: 250px;
+  height: 280px;
   overflow: hidden;
   position: relative;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.menu-image-highlight::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.3), transparent);
+  pointer-events: none;
 }
 
 .menu-image-highlight img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s ease;
+  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .menu-item-highlight:hover .menu-image-highlight img {
-  transform: scale(1.1);
+  transform: scale(1.15) rotate(2deg);
 }
 
 .menu-info-highlight {
-  padding: 2rem;
+  padding: 2rem 2rem 2.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: white;
+}
+
+.menu-category-highlight {
+  display: inline-block;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  text-transform: capitalize;
+  letter-spacing: 0.3px;
+  box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
 }
 
 .menu-info-highlight h3 {
-  font-size: 1.6rem;
+  font-size: 1.75rem;
   color: #2c3e50;
-  margin-bottom: 0.8rem;
-  font-weight: 600;
+  margin-bottom: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .menu-info-highlight p {
-  color: #666;
-  font-size: 1rem;
+  color: #555;
+  font-size: 1.05rem;
   margin-bottom: 1.5rem;
-  line-height: 1.7;
+  line-height: 1.8;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .price-action-highlight {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
+  gap: 1.5rem;
+  padding-top: 1rem;
+  border-top: 2px solid #f0f0f0;
 }
 
 .price-highlight {
-  font-size: 1.5rem;
-  color: #e74c3c;
-  font-weight: 700;
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+.price-highlight::after {
+  content: " VNĐ";
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #999;
+  margin-left: 4px;
 }
 
 .add-to-cart-btn-highlight {
-  padding: 12px 24px !important;
+  padding: 14px 28px !important;
   font-size: 15px !important;
-  border-radius: 8px !important;
-  background: linear-gradient(135deg, #ff6b6b, #ffd93d) !important;
-  font-weight: 600 !important;
+  border-radius: 30px !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  font-weight: 700 !important;
   white-space: nowrap !important;
-  min-width: 120px !important;
+  min-width: 140px !important;
   text-align: center !important;
+  letter-spacing: 0.5px !important;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.add-to-cart-btn-highlight::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.add-to-cart-btn-highlight:hover::before {
+  left: 100%;
 }
 
 .add-to-cart-btn-highlight:hover {
-  background: linear-gradient(135deg, #ff5252, #ffcc02) !important;
-  transform: scale(1.05) !important;
+  background: linear-gradient(135deg, #5568d3 0%, #6a3a93 100%) !important;
+  transform: scale(1.08) !important;
+  box-shadow: 0 12px 30px rgba(102, 126, 234, 0.6) !important;
 }
 
 /* Responsive cho MenuCard */
@@ -721,6 +806,20 @@
   padding: 1.5rem;
 }
 
+.menu-category {
+  display: inline-block;
+  padding: 5px 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 15px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  text-transform: capitalize;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.25);
+}
+
 .menu-info h3 {
   font-size: 1.25rem;
   color: #2c3e50;
@@ -728,23 +827,15 @@
   font-weight: 600;
 }
 
-.menu-category {
-  display: inline-block;
-  padding: 4px 12px;
-  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-  color: white;
-  border-radius: 15px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  margin-bottom: 0.75rem;
-  text-transform: capitalize;
-}
-
 .menu-info p {
   color: #7f8c8d;
   margin-bottom: 1rem;
   line-height: 1.5;
   font-size: 0.9rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .price-action {
@@ -752,10 +843,23 @@
   justify-content: space-between;
   align-items: center;
   margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f0f0f0;
 }
 
 .price {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #e74c3c;
+  font-size: 1.4rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.price::after {
+  content: " VNĐ";
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #999;
+  margin-left: 3px;
 }

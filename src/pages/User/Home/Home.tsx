@@ -7,7 +7,7 @@ import apiClient from "../../../services/api";
 import { useCart } from "../../../contexts/CartContext";
 
 interface MenuItem {
-  id: string;
+  id: number;
   name: string;
   price: number;
   category: string;
@@ -33,10 +33,10 @@ const Home: React.FC = () => {
         });
 
         const items: MenuItem[] = response.data.map((item: any) => ({
-          id: item.id.toString(),
+          id: item.id,
           name: item.name,
           price: item.price,
-          category: item.category?.name || "Kh\u00e1c",
+          category: item.category?.name,
           status: item.status?.toLowerCase() as "available" | "unavailable",
           image:
             item.imageUrl ||
@@ -127,9 +127,7 @@ const Home: React.FC = () => {
       {/* Menu Preview Section */}
       <section className="menu-preview">
         <div className="container">
-          <h2 className="section-title">
-            Th\u1ef1c \u0110\u01a1n N\u1ed5i B\u1eadt
-          </h2>
+          <h2 className="section-title">Thực Đơn Nổi Bật</h2>
           <div className="menu-grid-highlight">
             {loading ? (
               <div
@@ -139,7 +137,7 @@ const Home: React.FC = () => {
                   gridColumn: "1 / -1",
                 }}
               >
-                \u0110ang t\u1ea3i...
+                Đang tải...
               </div>
             ) : featuredMenu.length > 0 ? (
               featuredMenu.map((menuItem) => (
@@ -148,7 +146,8 @@ const Home: React.FC = () => {
                   image={menuItem.image}
                   title={menuItem.name}
                   description={menuItem.description || ""}
-                  price={menuItem.price.toString()}
+                  price={menuItem.price}
+                  category={menuItem.category}
                   alt={menuItem.name}
                   onAddToCart={handleAddToCart}
                 />
@@ -161,7 +160,7 @@ const Home: React.FC = () => {
                   gridColumn: "1 / -1",
                 }}
               >
-                Kh\u00f4ng c\u00f3 m\u00f3n n\u1ed5i b\u1eadt
+                Không có món nổi bật
               </div>
             )}
           </div>
