@@ -10,14 +10,7 @@ interface MenuItem {
   image: string;
   description?: string;
 }
-interface NewMenuItem {
-  name: string;
-  description?: string;
-  price: number;
-  categoryId: number;
-  status: "Available" | "Unavailable";
-  file?: File;
-}
+
 interface Category {
   id: string;
   name: string;

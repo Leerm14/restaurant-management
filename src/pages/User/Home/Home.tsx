@@ -69,7 +69,7 @@ const Home: React.FC = () => {
       </section>
 
       <section className="about-section">
-        <div className="container">
+        <div className="home-container">
           <div className="about-content">
             <h2 className="section-title">Chào mừng đến với Hương Vị</h2>
             <p className="about-description">
@@ -105,7 +105,7 @@ const Home: React.FC = () => {
       </section>
 
       <section className="menu-preview">
-        <div className="container">
+        <div className="home-container">
           <h2 className="section-title">Thực Đơn Nổi Bật</h2>
           <div className="menu-grid-highlight">
             {featuredMenu.map((menuItem) => (
@@ -124,7 +124,7 @@ const Home: React.FC = () => {
       </section>
 
       <section className="newsletter-section">
-        <div className="container">
+        <div className="home-container">
           <div className="newsletter-content">
             <h2>Đăng Ký Nhận Tin Của Chúng Tôi</h2>
             <p>

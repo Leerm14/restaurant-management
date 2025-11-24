@@ -131,7 +131,7 @@
   animation: fadeInUp 0.5s ease-out 0.5s both;
 }
 
-.btn {
+.payment-success-btn {
   flex: 1;
   padding: 14px 24px;
   border: none;
@@ -213,7 +213,7 @@
     flex-direction: column;
   }
 
-  .btn {
+  .payment-success-btn {
     width: 100%;
   }
 

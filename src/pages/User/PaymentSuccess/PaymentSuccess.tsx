@@ -74,13 +74,13 @@ const PaymentSuccess: React.FC = () => {
 
           <div className="action-buttons">
             <button
-              className="btn btn-primary"
+              className="payment-success-btn btn-primary"
               onClick={() => navigate("/order-history")}
             >
               Xem đơn hàng
             </button>
             <button
-              className="btn btn-secondary"
+              className="payment-success-btn btn-secondary"
               onClick={() => navigate("/menu")}
             >
               Tiếp tục đặt món

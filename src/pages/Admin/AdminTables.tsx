@@ -269,7 +269,7 @@ const AdminTables: React.FC = () => {
 
       {/* Danh sách bàn */}
       {loading ? (
-        <div className="loading">Đang tải...</div>
+        <div className="admin-tables-loading">Đang tải...</div>
       ) : (
         <div className="tables-grid">
           {tables.map((table) => (

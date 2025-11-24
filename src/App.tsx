@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout.tsx";
 import AdminLayout from "./layouts/Adminlayout.tsx";
 import AuthLayout from "./layouts/AuthLayout.tsx";
+import StaffLayout from "./layouts/StaffLayout.tsx";
 import Home from "./pages/User/Home/Home.tsx";
 import Menu from "./pages/User/Menu/Menu.tsx";
 import Booking from "./pages/User/Booking/Booking.tsx";
@@ -18,6 +19,8 @@ import AdminAccounts from "./pages/Admin/AdminAccounts.tsx";
 import AdminTables from "./pages/Admin/AdminTables.tsx";
 import AdminReports from "./pages/Admin/AdminReports.tsx";
 import AdminBooking from "./pages/Admin/AdminBooking.tsx";
+import StaffTables from "./pages/Staff/StaffTables.tsx";
+import StaffOrders from "./pages/Staff/StaffOrders.tsx";
 import { AuthProvider, useAuth } from "./contexts/AuthContext.tsx";
 import { CartProvider } from "./contexts/CartContext.tsx";
 import NotFoundPage from "./pages/404.tsx";
@@ -80,6 +83,28 @@ function AppRoutes(): React.ReactElement {
                   <Route path="/booking" element={<AdminBooking />} />
                 </Routes>
               </AdminLayout>
+            </ProtectRouter>
+          }
+        />
+
+        <Route
+          path="/staff"
+          element={<Navigate to="/staff/tables" replace />}
+        />
+        <Route
+          path="/staff/*"
+          element={
+            <ProtectRouter
+              isAuthenticated={isAuthenticated}
+              userRole={userRole}
+              allowedRoles={["staff", "admin"]}
+            >
+              <StaffLayout>
+                <Routes>
+                  <Route path="/tables" element={<StaffTables />} />
+                  <Route path="/orders" element={<StaffOrders />} />
+                </Routes>
+              </StaffLayout>
             </ProtectRouter>
           }
         />

@@ -5,7 +5,7 @@
   padding: 40px 0;
 }
 
-.container {
+.order-history-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
@@ -164,25 +164,25 @@
 }
 
 /* Empty State */
-.empty-state {
+.order-history-empty-state {
   text-align: center;
   padding: 60px 20px;
   color: #6c757d;
 }
 
-.empty-state p {
+.order-history-empty-state p {
   font-size: 16px;
   margin: 0;
 }
 
 /* Loading State */
-.loading-state {
+.order-history-loading-state {
   text-align: center;
   padding: 60px 20px;
   color: #6c757d;
 }
 
-.loading-state p {
+.order-history-loading-state p {
   font-size: 16px;
   margin: 0;
 }
@@ -425,7 +425,7 @@
     padding: 20px 0;
   }
 
-  .container {
+  .order-history-container {
     padding: 0 15px;
   }
 

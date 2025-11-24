@@ -141,7 +141,7 @@ const Menu: React.FC = () => {
       {/* Hero Section */}
       <section className="menu-hero">
         <div className="menu-hero-overlay">
-          <div className="container">
+          <div className="menu-container">
             <div className="hero-content">
               <h1 className="hero-title">Khám Phá Hương Vị Tuyệt Hảo</h1>
               <p className="hero-subtitle">
@@ -170,7 +170,7 @@ const Menu: React.FC = () => {
 
       {/* Featured Menu Section */}
       <section className="featured-menu-section">
-        <div className="container">
+        <div className="menu-container">
           <h2 className="section-title">Món Nổi Bật</h2>
           <div className="menu-grid-highlight">
             {loading ? (
@@ -213,7 +213,7 @@ const Menu: React.FC = () => {
 
       {/* Full Menu Section */}
       <section id="full-menu-section" className="full-menu-section">
-        <div className="container">
+        <div className="menu-container">
           <h2 className="section-title">Toàn Bộ Menu</h2>
 
           {/* Category Filter */}
@@ -273,7 +273,7 @@ const Menu: React.FC = () => {
 
       {/* CTA Section */}
       <section className="menu-cta-section">
-        <div className="container">
+        <div className="menu-container">
           <div className="cta-content">
             <h2>Bạn đã sẵn sàng để trải nghiệm?</h2>
             <p>

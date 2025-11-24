@@ -488,7 +488,7 @@ const AdminBooking: React.FC = () => {
 
       {/* Bookings Table */}
       {loading ? (
-        <div className="loading">Đang tải...</div>
+        <div className="admin-booking-loading">Đang tải...</div>
       ) : (
         <div className="bookings-table">
           <table>

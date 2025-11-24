@@ -5,7 +5,7 @@
   color: #333;
 }
 
-.container {
+.home-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
@@ -211,7 +211,7 @@
     font-size: 2rem;
   }
 
-  .container {
+  .home-container {
     padding: 0 15px;
   }
 }

@@ -231,7 +231,7 @@
 }
 
 /* Container */
-.container {
+.menu-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
@@ -314,7 +314,7 @@
     font-size: 2rem;
   }
 
-  .container {
+  .menu-container {
     padding: 0 15px;
   }
 

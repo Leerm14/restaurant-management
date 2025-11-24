@@ -251,17 +251,17 @@ const OrderHistory: React.FC = () => {
 
   return (
     <div className="order-history-page">
-      <div className="container">
+      <div className="order-history-container">
         <div className="order-history-header">
           <h1 className="page-title">Lịch sử đơn hàng của bạn</h1>
         </div>
 
         {loading ? (
-          <div className="loading-state">
+          <div className="order-history-loading-state">
             <p>Đang tải đơn hàng...</p>
           </div>
         ) : orders.length === 0 ? (
-          <div className="empty-state">
+          <div className="order-history-empty-state">
             <p>Bạn chưa có đơn hàng nào.</p>
           </div>
         ) : (
