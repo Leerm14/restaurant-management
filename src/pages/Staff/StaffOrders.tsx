@@ -302,7 +302,7 @@ const StaffOrders: React.FC = () => {
                     {expandedOrder === order.id
                       ? "Ẩn chi tiết"
                       : "Xem chi tiết"}{" "}
-                    ({order.items.length} món)
+                    (món)
                   </button>
 
                   {expandedOrder === order.id && (
