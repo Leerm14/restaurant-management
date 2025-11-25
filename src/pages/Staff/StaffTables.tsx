@@ -4,9 +4,9 @@ import apiClient from "../../services/api";
 
 interface Table {
   id: number;
-  tableNumber: string;
+  tableNumber: number;
   capacity: number;
-  status: "Available" | "Occupied" | "Reserved" | "Cleaning";
+  status: "Available" | "Booked" | "Used" | "Cleaning";
 }
 
 const StaffTables: React.FC = () => {
@@ -46,15 +46,15 @@ const StaffTables: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Available":
-        return "#27ae60";
-      case "Occupied":
-        return "#e74c3c";
-      case "Reserved":
-        return "#3498db";
+        return "#22c55e";
+      case "Booked":
+        return "#3b82f6";
+      case "Used":
+        return "#f59e0b";
       case "Cleaning":
-        return "#f39c12";
+        return "#ef4444";
       default:
-        return "#95a5a6";
+        return "#6b7280";
     }
   };
 
@@ -62,12 +62,12 @@ const StaffTables: React.FC = () => {
     switch (status) {
       case "Available":
         return "Trống";
-      case "Occupied":
-        return "Có khách";
-      case "Reserved":
+      case "Booked":
         return "Đã đặt";
+      case "Used":
+        return "Đang dùng";
       case "Cleaning":
-        return "Đang dọn";
+        return "Dọn dẹp";
       default:
         return status;
     }
@@ -75,9 +75,9 @@ const StaffTables: React.FC = () => {
 
   const statusOptions = [
     { value: "Available", label: "Trống" },
-    { value: "Occupied", label: "Có khách" },
-    { value: "Reserved", label: "Đã đặt" },
-    { value: "Cleaning", label: "Đang dọn" },
+    { value: "Booked", label: "Đã đặt" },
+    { value: "Used", label: "Đang dùng" },
+    { value: "Cleaning", label: "Dọn dẹp" },
   ];
 
   if (loading) {
@@ -119,16 +119,16 @@ const StaffTables: React.FC = () => {
             <i className="fas fa-users"></i>
             <div className="stat-info">
               <span className="stat-number">
-                {tables.filter((t) => t.status === "Occupied").length}
+                {tables.filter((t) => t.status === "Used").length}
               </span>
-              <span className="stat-label">Có khách</span>
+              <span className="stat-label">Đang dùng</span>
             </div>
           </div>
           <div className="stat-card reserved">
             <i className="fas fa-bookmark"></i>
             <div className="stat-info">
               <span className="stat-number">
-                {tables.filter((t) => t.status === "Reserved").length}
+                {tables.filter((t) => t.status === "Booked").length}
               </span>
               <span className="stat-label">Đã đặt</span>
             </div>

@@ -4,21 +4,25 @@ import apiClient from "../../services/api";
 
 interface Order {
   id: number;
-  customerName: string;
-  email: string;
-  phone: string;
-  orderType: "Dinein" | "Takeaway" | "Delivery";
-  status: "Pending" | "Preparing" | "Ready" | "Completed" | "Cancelled";
+  userId: number;
+  userFullName: string;
+  tableId: number | null;
+  tableName: string | null;
   totalAmount: number;
-  orderDate: string;
-  tableNumber?: string;
-  items: OrderItem[];
+  status: "Pending" | "Preparing" | "Ready" | "Completed" | "Cancelled";
+  orderType: "Dinein" | "Takeaway" | "Delivery";
+  createdAt: string;
+  orderItems: OrderItem[];
+  bookingTime?: string | null;
 }
 
 interface OrderItem {
+  id: number;
+  menuItemId: number;
   menuItemName: string;
   quantity: number;
-  price: number;
+  priceAtOrder: number;
+  subtotal: number;
 }
 
 const StaffOrders: React.FC = () => {
@@ -147,8 +151,6 @@ const StaffOrders: React.FC = () => {
         return "Tại chỗ";
       case "Takeaway":
         return "Mang đi";
-      case "Delivery":
-        return "Giao hàng";
       default:
         return type;
     }
@@ -248,15 +250,18 @@ const StaffOrders: React.FC = () => {
                         <i className="fas fa-concierge-bell"></i>
                         {getOrderTypeLabel(order.orderType)}
                       </span>
-                      {order.tableNumber && (
+                      {order.tableName && (
                         <span className="staff-table-info">
-                          <i className="fas fa-chair"></i> Bàn{" "}
-                          {order.tableNumber}
+                          <i className="fas fa-chair"></i> {order.tableName}
                         </span>
                       )}
                       <span className="staff-order-date">
-                        <i className="fas fa-clock"></i>
-                        {formatDate(order.orderDate)}
+                        {getOrderTypeLabel(order.orderType) === "Tại chỗ" ? (
+                          <div>
+                            <i className="fas fa-clock"></i>{" "}
+                            {formatDate(order.createdAt)}
+                          </div>
+                        ) : null}
                       </span>
                     </div>
                   </div>
@@ -273,15 +278,7 @@ const StaffOrders: React.FC = () => {
                 <div className="staff-order-customer">
                   <div className="staff-customer-info">
                     <i className="fas fa-user"></i>
-                    <span>{order.customerName}</span>
-                  </div>
-                  <div className="staff-customer-info">
-                    <i className="fas fa-envelope"></i>
-                    <span>{order.email}</span>
-                  </div>
-                  <div className="staff-customer-info">
-                    <i className="fas fa-phone"></i>
-                    <span>{order.phone}</span>
+                    <span>{order.userFullName}</span>
                   </div>
                 </div>
 
@@ -307,13 +304,13 @@ const StaffOrders: React.FC = () => {
 
                   {expandedOrder === order.id && (
                     <div className="staff-order-items-list">
-                      {order.items.map((item, index) => (
-                        <div key={index} className="staff-order-item">
+                      {order.orderItems.map((item) => (
+                        <div key={item.id} className="staff-order-item">
                           <span className="staff-item-name">
                             {item.quantity}x {item.menuItemName}
                           </span>
                           <span className="staff-item-price">
-                            {formatPrice(item.price * item.quantity)}
+                            {formatPrice(item.subtotal)}
                           </span>
                         </div>
                       ))}
