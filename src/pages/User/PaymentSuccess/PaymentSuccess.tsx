@@ -21,7 +21,7 @@ const PaymentSuccess: React.FC = () => {
   };
 
   return (
-    <div className="payment-result-page">
+    <div className="payment-result-page success">
       <div className="payment-result-container">
         <div className="payment-result-card success">
           <div className="success-icon">

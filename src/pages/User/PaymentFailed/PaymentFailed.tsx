@@ -11,7 +11,7 @@ const PaymentFailed: React.FC = () => {
   const errorCode = searchParams.get("errorCode");
 
   return (
-    <div className="payment-result-page">
+    <div className="payment-result-page failed">
       <div className="payment-result-container">
         <div className="payment-result-card failed">
           <div className="success-icon">
@@ -76,7 +76,7 @@ const PaymentFailed: React.FC = () => {
           <div className="action-buttons">
             <button
               className="btn btn-primary"
-              onClick={() => navigate("/cart")}
+              onClick={() => navigate("/order-history")}
             >
               Thử lại
             </button>

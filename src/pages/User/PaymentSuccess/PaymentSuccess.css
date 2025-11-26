@@ -6,7 +6,9 @@
   justify-content: center;
   padding: 20px;
 }
-
+.payment-result-page.success {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
 .payment-result-container {
   width: 100%;
   max-width: 600px;

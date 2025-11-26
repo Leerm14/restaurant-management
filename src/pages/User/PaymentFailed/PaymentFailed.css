@@ -38,6 +38,6 @@
 }
 
 /* Override gradient cho failed page */
-.payment-result-page {
+.payment-result-page.failed {
   background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
 }

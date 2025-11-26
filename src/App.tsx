@@ -172,8 +172,14 @@ function AppRoutes(): React.ReactElement {
                     </ProtectRouter>
                   }
                 />
-                <Route path="payment-success" element={<PaymentSuccess />} />
-                <Route path="payment-failed" element={<PaymentFailed />} />
+                <Route
+                  path="/payment/payment-success"
+                  element={<PaymentSuccess />}
+                />
+                <Route
+                  path="/payment/payment-failed"
+                  element={<PaymentFailed />}
+                />
 
                 {/* Catch-all cho các link còn lại lọt vào MainLayout */}
                 <Route path="*" element={<Navigate to="/404" replace />} />
