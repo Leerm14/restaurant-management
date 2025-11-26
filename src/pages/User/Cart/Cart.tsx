@@ -39,23 +39,29 @@ const Cart: React.FC = () => {
 
       setLoadingBooking(true);
       try {
-        const response = await apiClient.get("/api/bookings", {
-          params: {
-            page: 0,
-            size: 10,
-          },
-        });
+        // Use user-specific endpoint to fetch this user's bookings
+        const response = await apiClient.get(`/api/bookings/user/${userId}`);
 
         const bookings = Array.isArray(response.data)
           ? response.data
           : response.data.content || [];
 
+        // Only consider bookings for today or later
+        const now = new Date();
+        const startOfToday = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate()
+        );
+
         const userActiveBooking = bookings.find(
           (booking: any) =>
-            booking.user?.id === userId &&
-            (booking.status === "Confirmed" || booking.status === "Pending")
+            (booking.status === "Confirmed" || booking.status === "Pending") &&
+            new Date(booking.bookingTime) >= startOfToday
         );
+
         console.log("User active booking:", userActiveBooking);
+
         if (userActiveBooking) {
           setActiveBooking({
             id: userActiveBooking.id,
@@ -64,6 +70,8 @@ const Cart: React.FC = () => {
             bookingTime: userActiveBooking.bookingTime,
             status: userActiveBooking.status,
           });
+        } else {
+          setActiveBooking(null);
         }
       } catch (error) {
         console.error("Error checking active booking:", error);
