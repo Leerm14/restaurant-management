@@ -4,7 +4,7 @@ import apiClient from "../../../services/api";
 import Button from "../../../components/Button";
 import "./OrderHistory.css";
 
-// --- Interfaces ---
+
 interface OrderItem {
   id: number;
   menuItemId: number;
@@ -33,18 +33,18 @@ const OrderHistory: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // State cho các chức năng cũ
+  
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
 
-  // State cho chức năng Thanh toán mới
+  
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentOrderId, setPaymentOrderId] = useState<number | null>(null);
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-  // --- Fetch Orders ---
+  
   useEffect(() => {
     const fetchOrders = async () => {
       if (!userId) {
@@ -55,7 +55,7 @@ const OrderHistory: React.FC = () => {
       try {
         const response = await apiClient.get(`/api/orders/user/${userId}`);
         console.log("Fetched orders:", response.data);
-        // Sắp xếp đơn mới nhất lên đầu
+        
         setOrders(response.data.reverse());
       } catch (error) {
         console.error("Error fetching orders:", error);
@@ -67,7 +67,7 @@ const OrderHistory: React.FC = () => {
     fetchOrders();
   }, [userId]);
 
-  // --- Helper Functions ---
+  
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
@@ -101,7 +101,7 @@ const OrderHistory: React.FC = () => {
     }
   };
 
-  // --- Handlers Cũ (Xem, Sửa, Hủy) ---
+  
 
   const handleViewDetails = async (orderId: number) => {
     try {
@@ -118,7 +118,7 @@ const OrderHistory: React.FC = () => {
   };
 
   const handleEditOrder = (order: Order) => {
-    // Clone object để tránh mutate trực tiếp state
+    
     setEditingOrder(JSON.parse(JSON.stringify(order)));
   };
 
@@ -170,7 +170,7 @@ const OrderHistory: React.FC = () => {
       await apiClient.put(`/api/orders/${editingOrder.id}`, orderCreateRequest);
       alert("Cập nhật đơn hàng thành công!");
 
-      // Refresh orders list
+      
       const response = await apiClient.get(`/api/orders/user/${userId}`);
       const ordersData = Array.isArray(response.data)
         ? response.data
@@ -196,7 +196,7 @@ const OrderHistory: React.FC = () => {
       await apiClient.patch(`/api/orders/${orderId}/cancel`);
       alert("Đã hủy đơn hàng thành công!");
 
-      // Refresh orders list
+      
       const response = await apiClient.get(`/api/orders/user/${userId}`);
       const ordersData = Array.isArray(response.data)
         ? response.data
@@ -210,7 +210,7 @@ const OrderHistory: React.FC = () => {
     }
   };
 
-  // --- Handlers Mới (Thanh toán) ---
+  
 
   const openPaymentModal = (order: Order) => {
     setPaymentOrderId(order.id);
@@ -327,7 +327,7 @@ const OrderHistory: React.FC = () => {
                           Chi tiết
                         </button>
 
-                        {/* Logic hiển thị nút Sửa/Hủy (Chỉ khi Pending) */}
+                        
                         {order.status === "Pending" && (
                           <>
                             <button
@@ -349,7 +349,7 @@ const OrderHistory: React.FC = () => {
                           </>
                         )}
 
-                        {/* Logic hiển thị nút Thanh toán (Chỉ khi Completed) */}
+                        
                         {order.status === "Completed" &&
                           order.paymentStatus !== "Successful" && (
                             <button
@@ -394,7 +394,7 @@ const OrderHistory: React.FC = () => {
         )}
       </div>
 
-      {/* --- MODAL THANH TOÁN --- */}
+      
       {showPaymentModal && (
         <div
           className="modal-overlay"
@@ -467,7 +467,7 @@ const OrderHistory: React.FC = () => {
         </div>
       )}
 
-      {/* --- MODAL SỬA ĐƠN HÀNG --- */}
+      
       {editingOrder && (
         <div className="modal-overlay" onClick={handleCancelEdit}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -561,7 +561,7 @@ const OrderHistory: React.FC = () => {
         </div>
       )}
 
-      {/* --- MODAL CHI TIẾT ĐƠN HÀNG --- */}
+      
       {selectedOrder && (
         <div className="modal-overlay" onClick={handleCloseModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>

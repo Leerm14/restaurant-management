@@ -12,7 +12,6 @@ interface MenuCardProps {
   onAddToCart?: (item: { title: string; price: string; image: string }) => void;
 }
 
-// Component MenuCard tái sử dụng cho hiển thị món ăn
 const MenuCard: React.FC<MenuCardProps> = ({
   image,
   title,
@@ -22,12 +21,10 @@ const MenuCard: React.FC<MenuCardProps> = ({
   alt,
   onAddToCart,
 }) => {
-  // Định dạng giá tiền
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN").format(price);
   };
 
-  // Xử lý thêm vào giỏ hàng
   const handleAddToCart = () => {
     if (onAddToCart) {
       onAddToCart({ title, price: price.toString(), image });

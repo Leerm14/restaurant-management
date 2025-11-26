@@ -26,12 +26,12 @@ const Menu: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([
-    { id: "all", name: "T\u1ea5t c\u1ea3" },
+    { id: "all", name: "Tất cả" },
   ]);
   const [loading, setLoading] = useState(false);
   const { addToCart } = useCart();
 
-  // Fetch categories
+  
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -48,26 +48,30 @@ const Menu: React.FC = () => {
     fetchCategories();
   }, []);
 
-  // Fetch menu items
+  
   useEffect(() => {
     const fetchMenuItems = async () => {
       setLoading(true);
       try {
         let response;
+
         if (selectedCategory !== "all") {
+          
+          
           response = await apiClient.get(
             `/api/menu/category/${selectedCategory}`,
             {
               params: {
                 page: 0,
-                size: 100,
+                size: 100, 
               },
             }
           );
         } else {
+          
           response = await apiClient.get("/api/menu", {
             params: {
-              available: true,
+              available: true, 
               page: 0,
               size: 100,
             },
@@ -93,21 +97,22 @@ const Menu: React.FC = () => {
       }
     };
     fetchMenuItems();
-  }, [selectedCategory]);
+  }, [selectedCategory]); 
 
-  // Lấy menu theo category
+  
   const getFilteredMenu = (): MenuItem[] => {
+    
     return menuItems.filter((item) => item.status === "available");
   };
 
-  // Lấy 3 món nổi bật đầu tiên
+  
   const filteredMenu = getFilteredMenu();
   const featuredMenu: MenuItem[] = filteredMenu.slice(0, 3);
 
-  // Lấy menu thường (từ món thứ 4 trở đi)
+  
   const regularMenu: MenuItem[] = filteredMenu.slice(3);
 
-  // Xử lý thêm vào giỏ hàng
+  
   const handleAddToCart = (item: {
     title: string;
     price: string;
@@ -125,7 +130,7 @@ const Menu: React.FC = () => {
     }
   };
 
-  // Xử lý scroll đến full menu section
+  
   const scrollToFullMenu = () => {
     const fullMenuSection = document.getElementById("full-menu-section");
     if (fullMenuSection) {
@@ -138,7 +143,7 @@ const Menu: React.FC = () => {
 
   return (
     <div className="menu-page">
-      {/* Hero Section */}
+      
       <section className="menu-hero">
         <div className="menu-hero-overlay">
           <div className="menu-container">
@@ -153,7 +158,7 @@ const Menu: React.FC = () => {
               </Button>
             </div>
 
-            {/* Featured dishes circles */}
+            
             <div className="hero-dishes">
               {menuItems.slice(0, 6).map((dish, index) => (
                 <div
@@ -168,7 +173,7 @@ const Menu: React.FC = () => {
         </div>
       </section>
 
-      {/* Featured Menu Section */}
+      
       <section className="featured-menu-section">
         <div className="menu-container">
           <h2 className="section-title">Món Nổi Bật</h2>
@@ -216,7 +221,7 @@ const Menu: React.FC = () => {
         <div className="menu-container">
           <h2 className="section-title">Toàn Bộ Menu</h2>
 
-          {/* Category Filter */}
+          
           <div className="category-filter">
             {categories.map((category) => (
               <button
@@ -231,7 +236,7 @@ const Menu: React.FC = () => {
             ))}
           </div>
 
-          {/* Menu Grid */}
+          
           <div className="menu-grid">
             {loading ? (
               <div
@@ -271,7 +276,7 @@ const Menu: React.FC = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
+      
       <section className="menu-cta-section">
         <div className="menu-container">
           <div className="cta-content">

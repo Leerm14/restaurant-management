@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import apiClient from "../../../services/api"; // Import apiClient
+import apiClient from "../../../services/api";
 import "./PaymentFailed.css";
 
 const PaymentFailed: React.FC = () => {
@@ -11,19 +11,19 @@ const PaymentFailed: React.FC = () => {
   const reason = searchParams.get("reason");
   const errorCode = searchParams.get("errorCode");
 
-  // --- THÊM ĐOẠN CODE NÀY ---
+  
   useEffect(() => {
     const updatePaymentToFailed = async () => {
       if (!orderId) return;
 
       try {
-        // 1. Lấy thông tin payment dựa trên orderId
+        
         const paymentRes = await apiClient.get(
           `/api/payments/order/${orderId}`
         );
         const payment = paymentRes.data;
 
-        // 2. Nếu trạng thái đang là Pending thì cập nhật thành Failed
+        
         if (payment && payment.status === "Pending") {
           await apiClient.patch(`/api/payments/${payment.id}/fail`);
           console.log("Đã cập nhật trạng thái thanh toán thành Failed");
@@ -35,7 +35,7 @@ const PaymentFailed: React.FC = () => {
 
     updatePaymentToFailed();
   }, [orderId]);
-  // ---------------------------
+  
 
   return (
     <div className="payment-result-page failed">

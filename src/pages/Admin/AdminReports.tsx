@@ -238,7 +238,6 @@ const AdminReports: React.FC = () => {
         </button>
       </div>
 
-      {/* Thống kê đơn hàng theo tháng */}
       {monthlyStats && (
         <div style={{ marginBottom: "40px" }}>
           <h2
@@ -437,8 +436,6 @@ const AdminReports: React.FC = () => {
           Tải lại
         </button>
       </div>
-
-      {/* Thống kê doanh thu */}
       {loading ? (
         <div
           style={{

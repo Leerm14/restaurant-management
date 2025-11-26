@@ -44,7 +44,6 @@ const AdminBooking: React.FC = () => {
     loadBookings();
   }, [currentPage, pageSize]);
 
-  // API 2: Lấy tất cả đặt bàn
   const loadBookings = async () => {
     setLoading(true);
     setError("");
@@ -54,19 +53,15 @@ const AdminBooking: React.FC = () => {
       });
       const data = response.data;
       console.log("Fetched bookings:", data);
-
-      // Extract bookings array from response
       let bookingsData = [];
       if (Array.isArray(data)) {
         bookingsData = data;
       } else if (data && Array.isArray(data.content)) {
         bookingsData = data.content;
       } else if (data && typeof data === "object") {
-        // Handle case where data might be a single booking wrapped in object
         bookingsData = [data];
       }
 
-      // Clean up the data to remove circular references
       const cleanedBookings = bookingsData.map((booking: any) => ({
         id: booking.id,
         userId: booking.user?.id || booking.userId,
@@ -91,27 +86,21 @@ const AdminBooking: React.FC = () => {
     }
   };
 
-  // API 1: Tạo đặt bàn mới
   const handleAddBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     try {
-      // Validate user ID
       if (!formData.userId || formData.userId <= 0) {
         setError("Vui lòng nhập ID người dùng hợp lệ");
         setLoading(false);
         return;
       }
-
-      // Validate table ID
       if (!formData.tableId || formData.tableId <= 0) {
         setError("Vui lòng nhập ID bàn hợp lệ");
         setLoading(false);
         return;
       }
-
-      // Validate booking time is in the future
       const bookingDate = new Date(formData.bookingTime);
       const now = new Date();
       if (bookingDate <= now) {
@@ -119,15 +108,11 @@ const AdminBooking: React.FC = () => {
         setLoading(false);
         return;
       }
-
-      // Validate number of guests
       if (formData.numGuests < 1) {
         setError("Số khách phải lớn hơn 0");
         setLoading(false);
         return;
       }
-
-      // Format time to include seconds for ISO-8601
       let formattedTime = formData.bookingTime;
       if (
         formattedTime &&
@@ -157,8 +142,6 @@ const AdminBooking: React.FC = () => {
         err.response?.data?.message ||
         err.response?.data ||
         "Không thể tạo đặt bàn mới";
-
-      // Translate common error messages
       if (typeof errorMsg === "string") {
         if (
           errorMsg.includes("not available") ||
@@ -191,8 +174,6 @@ const AdminBooking: React.FC = () => {
       setLoading(false);
     }
   };
-
-  // API 7: Cập nhật đặt bàn
   const handleUpdateBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedBooking) return;
@@ -200,14 +181,12 @@ const AdminBooking: React.FC = () => {
     setLoading(true);
     setError("");
     try {
-      // Validate table ID
       if (!formData.tableId || formData.tableId <= 0) {
         setError("Vui lòng nhập ID bàn hợp lệ");
         setLoading(false);
         return;
       }
 
-      // Validate booking time is in the future
       const bookingDate = new Date(formData.bookingTime);
       const now = new Date();
       if (bookingDate <= now) {
@@ -216,14 +195,12 @@ const AdminBooking: React.FC = () => {
         return;
       }
 
-      // Validate number of guests
       if (formData.numGuests < 1) {
         setError("Số khách phải lớn hơn 0");
         setLoading(false);
         return;
       }
 
-      // Format time to include seconds for ISO-8601
       let formattedTime = formData.bookingTime;
       if (
         formattedTime &&
@@ -249,7 +226,6 @@ const AdminBooking: React.FC = () => {
         err.response?.data ||
         "Không thể cập nhật đặt bàn";
 
-      // Translate common error messages
       if (typeof errorMsg === "string") {
         if (
           errorMsg.includes("not available") ||
@@ -281,7 +257,6 @@ const AdminBooking: React.FC = () => {
     }
   };
 
-  // API: Cập nhật trạng thái đặt bàn (PATCH)
   const handleUpdateBookingStatus = async (id: number, status: string) => {
     const confirmMessages: { [key: string]: string } = {
       Confirmed: "Xác nhận đặt bàn này?",
@@ -313,22 +288,18 @@ const AdminBooking: React.FC = () => {
     }
   };
 
-  // API 7.1: Hủy đặt bàn (fallback nếu không dùng PATCH)
   const handleCancelBooking = async (id: number) => {
     handleUpdateBookingStatus(id, "Cancelled");
   };
 
-  // API 8: Hoàn thành đặt bàn (fallback nếu không dùng PATCH)
   const handleCompleteBooking = async (id: number) => {
     handleUpdateBookingStatus(id, "Completed");
   };
 
-  // API: Xác nhận đặt bàn
   const handleConfirmBooking = async (id: number) => {
     handleUpdateBookingStatus(id, "Confirmed");
   };
 
-  // API 9: Xóa đặt bàn
   const handleDeleteBooking = async (id: number) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa đặt bàn này?")) return;
 
@@ -345,7 +316,6 @@ const AdminBooking: React.FC = () => {
     }
   };
 
-  // API 6: Tìm kiếm theo số điện thoại
   const handleSearchByPhone = async () => {
     if (!searchTerm.trim()) {
       loadBookings();
@@ -358,7 +328,6 @@ const AdminBooking: React.FC = () => {
       const response = await apiClient.get(`/api/bookings/phone/${searchTerm}`);
       const data = response.data;
 
-      // Extract bookings array from response
       let bookingsData = [];
       if (Array.isArray(data)) {
         bookingsData = data;
@@ -368,7 +337,6 @@ const AdminBooking: React.FC = () => {
         bookingsData = [data];
       }
 
-      // Clean up the data to remove circular references
       const cleanedBookings = bookingsData.map((booking: any) => ({
         id: booking.id,
         userId: booking.user?.id || booking.userId,
@@ -458,7 +426,6 @@ const AdminBooking: React.FC = () => {
 
       {error && <div className="error-message">{error}</div>}
 
-      {/* Search and Filter */}
       <div className="booking-controls">
         <div className="search-box">
           <input
@@ -486,7 +453,6 @@ const AdminBooking: React.FC = () => {
         </div>
       </div>
 
-      {/* Bookings Table */}
       {loading ? (
         <div className="admin-booking-loading">Đang tải...</div>
       ) : (
@@ -639,7 +605,6 @@ const AdminBooking: React.FC = () => {
         </div>
       )}
 
-      {/* Pagination */}
       <div className="pagination">
         <button
           onClick={() => setCurrentPage((prev) => Math.max(0, prev - 1))}
@@ -653,7 +618,6 @@ const AdminBooking: React.FC = () => {
         </button>
       </div>
 
-      {/* Modal thêm đặt bàn */}
       {showAddModal && (
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -736,7 +700,6 @@ const AdminBooking: React.FC = () => {
         </div>
       )}
 
-      {/* Modal sửa đặt bàn */}
       {showEditModal && selectedBooking && (
         <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>

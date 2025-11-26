@@ -33,12 +33,7 @@ const StaffTables: React.FC = () => {
   );
   const [currentTableId, setCurrentTableId] = useState<number | null>(null);
   const [loadingBookings, setLoadingBookings] = useState(false);
-
-  // Small stub for edit modal (project had references to openEditModal in examples)
   const openEditModal = (table: Table) => {
-    // TODO: replace with real edit modal logic if available
-    // For now show a quick alert to avoid undefined errors
-    // eslint-disable-next-line no-alert
     alert(`Open edit for table ${table.tableNumber}`);
   };
 
@@ -70,8 +65,6 @@ const StaffTables: React.FC = () => {
       alert("Có lỗi khi cập nhật trạng thái bàn!");
     }
   };
-
-  // Fetch bookings for a specific table and show modal
   const handleViewBookings = async (tableId: number) => {
     setCurrentTableId(tableId);
     setLoadingBookings(true);
@@ -85,27 +78,24 @@ const StaffTables: React.FC = () => {
       setSelectedTableBookings(bookings);
     } catch (error) {
       console.error("Error fetching bookings:", error);
-      // eslint-disable-next-line no-alert
+
       alert("Không thể tải lịch đặt bàn!");
       setSelectedTableBookings([]);
     } finally {
       setLoadingBookings(false);
     }
   };
-
-  // Check-in a booking (mark guest arrived) and refresh tables
   const handleCheckInGuest = async (bookingId: number) => {
     if (!window.confirm("Xác nhận khách đã đến và nhận bàn?")) return;
 
     try {
       await apiClient.post(`/api/bookings/${bookingId}/check-in`);
-      // eslint-disable-next-line no-alert
       alert("Check-in thành công! Bàn đã chuyển sang trạng thái Đang dùng.");
       setShowBookingModal(false);
       setRefreshTables((prev) => prev + 1);
     } catch (error: any) {
       console.error("Check-in failed:", error);
-      // eslint-disable-next-line no-alert
+
       alert(error?.response?.data || "Lỗi khi check-in!");
     }
   };
@@ -283,7 +273,6 @@ const StaffTables: React.FC = () => {
             </div>
           ))}
         </div>
-        {/* Booking Modal */}
         {showBookingModal && (
           <div
             className="modal-overlay"

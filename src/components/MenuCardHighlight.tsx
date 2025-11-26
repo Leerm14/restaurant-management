@@ -12,7 +12,6 @@ interface MenuCardHighlightProps {
   onAddToCart?: (item: { title: string; price: string; image: string }) => void;
 }
 
-// Component MenuCardHighlight nổi bật cho hiển thị món ăn đặc biệt
 const MenuCardHighlight: React.FC<MenuCardHighlightProps> = ({
   image,
   title,
@@ -22,12 +21,10 @@ const MenuCardHighlight: React.FC<MenuCardHighlightProps> = ({
   alt,
   onAddToCart,
 }) => {
-  // Định dạng giá tiền
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN").format(price);
   };
 
-  // Xử lý thêm vào giỏ hàng
   const handleAddToCart = () => {
     if (onAddToCart) {
       onAddToCart({ title, price: price.toString(), image });

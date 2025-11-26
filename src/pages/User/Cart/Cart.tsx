@@ -28,7 +28,6 @@ const Cart: React.FC = () => {
   const [loadingBooking, setLoadingBooking] = useState(true);
   const [orderType, setOrderType] = useState<"Dinein" | "Takeaway">("Dinein");
 
-  // Kiểm tra xem user có booking đang active không (chỉ khi chọn Dinein)
   useEffect(() => {
     const checkActiveBooking = async () => {
       if (!userId || orderType === "Takeaway") {
@@ -39,14 +38,12 @@ const Cart: React.FC = () => {
 
       setLoadingBooking(true);
       try {
-        // Use user-specific endpoint to fetch this user's bookings
         const response = await apiClient.get(`/api/bookings/user/${userId}`);
 
         const bookings = Array.isArray(response.data)
           ? response.data
           : response.data.content || [];
 
-        // Only consider bookings for today or later
         const now = new Date();
         const startOfToday = new Date(
           now.getFullYear(),
@@ -102,39 +99,35 @@ const Cart: React.FC = () => {
       return;
     }
 
-    // Nếu chọn Dinein mà chưa có booking -> yêu cầu đặt bàn trước
     if (orderType === "Dinein" && !activeBooking) {
       navigate("/booking", { state: { fromCart: true } });
       return;
     }
 
     try {
-      // Map cartItems to OrderItemRequest format
+
       const orderItems = cartItems.map((item) => ({
         menuItemId: item.id,
         quantity: item.quantity,
       }));
 
-      // Create OrderCreateRequest DTO
       const orderCreateRequest: any = {
         userId: userId,
         orderType: orderType,
         orderItems: orderItems,
       };
 
-      // Chỉ thêm tableId nếu là Dinein
       if (orderType === "Dinein" && activeBooking) {
         orderCreateRequest.tableId = activeBooking.tableId;
       }
 
-      // Call POST /api/orders
       const response = await apiClient.post("/api/orders", orderCreateRequest);
 
       if (response.status === 201) {
         alert("Đặt món thành công!");
-        clearCart(); // Xóa giỏ hàng sau khi đặt thành công
-        setActiveBooking(null); // Reset booking state
-        navigate("/order-history"); // Chuyển đến lịch sử đơn hàng
+        clearCart(); 
+        setActiveBooking(null); 
+        navigate("/order-history");
       }
     } catch (error: any) {
       console.error("Error creating order:", error);
@@ -231,8 +224,6 @@ const Cart: React.FC = () => {
 
             <div className="cart-summary">
               <h2 className="summary-title">Tổng Đơn Hàng</h2>
-
-              {/* Chọn phương thức */}
               <div className="order-type-selection">
                 <h3 className="order-type-title">Phương thức</h3>
                 <div className="order-type-buttons">
@@ -272,7 +263,6 @@ const Cart: React.FC = () => {
                 </span>
               </div>
 
-              {/* Hiển thị thông tin booking cho Dinein */}
               {orderType === "Dinein" && (
                 <>
                   {loadingBooking ? (
@@ -302,7 +292,6 @@ const Cart: React.FC = () => {
                 </>
               )}
 
-              {/* Nút đặt món */}
               <button className="checkout-btn" onClick={handleCheckout}>
                 {orderType === "Dinein" && !activeBooking
                   ? "Đặt bàn trước"

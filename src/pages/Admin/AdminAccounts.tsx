@@ -230,7 +230,6 @@ const AdminAccounts: React.FC = () => {
   const handleDeleteUser = async (userId: number) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
       try {
-        // Xóa user trong backend (backend cũng phải xóa trên Firebase Admin SDK)
         await apiClient.delete(`/api/users/${userId}`);
         alert("Xóa người dùng thành công!");
         setRefreshUsers((prev) => prev + 1);

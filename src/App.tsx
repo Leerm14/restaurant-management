@@ -46,10 +46,8 @@ function AppRoutes(): React.ReactElement {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Route 404 nằm ngoài cùng để không dính layout */}
         <Route path="/404" element={<NotFoundPage />} />
 
-        {/* Public Routes */}
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route
           path="/signin"
@@ -67,8 +65,6 @@ function AppRoutes(): React.ReactElement {
             </AuthLayout>
           }
         />
-
-        {/* Admin Routes Group */}
         <Route
           path="/admin"
           element={<Navigate to="/admin/accounts" replace />}
@@ -88,7 +84,6 @@ function AppRoutes(): React.ReactElement {
                   <Route path="tables" element={<AdminTables />} />
                   <Route path="reports" element={<AdminReports />} />
                   <Route path="booking" element={<AdminBooking />} />
-                  {/* Catch-all cho admin */}
                   <Route path="*" element={<Navigate to="/404" replace />} />
                 </Routes>
               </AdminLayout>
@@ -96,7 +91,6 @@ function AppRoutes(): React.ReactElement {
           }
         />
 
-        {/* Staff Routes Group */}
         <Route
           path="/staff"
           element={<Navigate to="/staff/tables" replace />}
@@ -121,7 +115,6 @@ function AppRoutes(): React.ReactElement {
           }
         />
 
-        {/* User Routes Group (Main Layout) */}
         <Route
           path="/*"
           element={
@@ -181,14 +174,12 @@ function AppRoutes(): React.ReactElement {
                   element={<PaymentFailed />}
                 />
 
-                {/* Catch-all cho các link còn lại lọt vào MainLayout */}
                 <Route path="*" element={<Navigate to="/404" replace />} />
               </Routes>
             </MainLayout>
           }
         />
 
-        {/* Fallback cuối cùng */}
         <Route path="*" element={<Navigate to="/404" replace />} />
       </Routes>
     </BrowserRouter>

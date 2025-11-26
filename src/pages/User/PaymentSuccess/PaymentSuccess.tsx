@@ -7,7 +7,7 @@ const PaymentSuccess: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Thêm trạng thái đang xác thực
+  
   const [isValidating, setIsValidating] = useState(true);
 
   const orderId = searchParams.get("orderId");
@@ -16,40 +16,39 @@ const PaymentSuccess: React.FC = () => {
 
   useEffect(() => {
     const validateAndConfirmPayment = async () => {
-      // Nếu không có orderId, đuổi về trang chủ hoặc trang lỗi
+      
       if (!orderId) {
         navigate("/");
         return;
       }
 
       try {
-        // Bước 1: Lấy thông tin payment hiện tại từ Database
+        
         const paymentRes = await apiClient.get(
           `/api/payments/order/${orderId}`
         );
         const payment = paymentRes.data;
 
         if (payment.status === "Successful") {
-          // Trường hợp 1: Đã thành công (ví dụ Webhook đã chạy trước đó)
-          setIsValidating(false); // Cho phép hiển thị trang
+          setIsValidating(false); 
         } else if (payment.status === "Pending") {
-          // Trường hợp 2: Vẫn đang chờ (Webhook chưa tới hoặc chạy Localhost)
-          // Gọi API confirm để cập nhật trạng thái
+          
+          
           try {
             await apiClient.patch(`/api/payments/${payment.id}/confirm`);
-            // Confirm thành công -> Cho phép hiển thị
+            
             setIsValidating(false);
             console.log("Đã xác nhận thanh toán thành công từ Client.");
           } catch (err) {
             console.error("Lỗi khi confirm payment:", err);
-            // Confirm thất bại -> Đẩy sang trang Failed
+            
             navigate(
               `/payment/payment-failed?orderId=${orderId}&reason=ConfirmFailed`
             );
           }
         } else {
-          // Trường hợp 3: Trạng thái là Failed hoặc Cancelled
-          // Đẩy sang trang Failed ngay lập tức
+          
+          
           navigate(
             `/payment/payment-failed?orderId=${orderId}&reason=Status_${payment.status}`
           );
@@ -71,8 +70,8 @@ const PaymentSuccess: React.FC = () => {
     }).format(Number(amount));
   };
 
-  // --- MÀN HÌNH CHỜ (LOADING) ---
-  // Nếu đang validate, hiển thị spinner thay vì nội dung thành công
+  
+  
   if (isValidating) {
     return (
       <div className="payment-result-page success">
@@ -104,7 +103,7 @@ const PaymentSuccess: React.FC = () => {
     );
   }
 
-  // --- MÀN HÌNH THÀNH CÔNG (Chỉ hiện khi isValidating = false) ---
+  
   return (
     <div className="payment-result-page success">
       <div className="payment-result-container">

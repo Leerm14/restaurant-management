@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import "./StaffOrders.css";
 import apiClient from "../../services/api";
 
-// --- Interfaces ---
 interface Payment {
   id: number;
   orderId: number;
@@ -34,7 +33,6 @@ interface Order {
 }
 
 const StaffOrders: React.FC = () => {
-  // --- State ---
   const [orders, setOrders] = useState<Order[]>([]);
   const [pendingPayments, setPendingPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(false);
@@ -54,16 +52,12 @@ const StaffOrders: React.FC = () => {
     { value: "Cancelled", label: "Đã hủy", color: "#e74c3c" },
   ];
 
-  // --- API Helpers ---
-
-  // Hàm xử lý dữ liệu an toàn: đảm bảo luôn trả về mảng
   const safeData = (data: any) => {
     if (Array.isArray(data)) return data;
     if (data && Array.isArray(data.content)) return data.content;
     return [];
   };
 
-  // 1. Tìm kiếm đơn hàng
   const handleSearch = async () => {
     if (!searchValue.trim()) {
       alert("Vui lòng nhập thông tin tìm kiếm!");
@@ -96,7 +90,6 @@ const StaffOrders: React.FC = () => {
     }
   };
 
-  // 2. Lấy đơn hàng theo trạng thái
   const fetchOrdersByStatus = async (status: string) => {
     try {
       setLoading(true);
@@ -105,38 +98,29 @@ const StaffOrders: React.FC = () => {
       setOrders(safeData(response.data));
     } catch (error) {
       console.error("Error fetching orders:", error);
-      setOrders([]); // Reset nếu lỗi để tránh crash
+      setOrders([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // 3. Lấy danh sách yêu cầu thanh toán (Payment Pending)
   const fetchPendingPayments = async () => {
     try {
       const response = await apiClient.get("/api/payments/status/Pending");
       setPendingPayments(safeData(response.data));
     } catch (error) {
       console.error("Error fetching payments:", error);
-      // Không setPendingPayments([]) ở đây để tránh nhấp nháy nếu lỗi mạng tạm thời
     }
   };
 
-  // --- Effects ---
-
   useEffect(() => {
-    // Chỉ load theo status nếu không đang tìm kiếm
     if (!searchValue) {
       fetchOrdersByStatus(selectedStatus);
     }
     fetchPendingPayments();
-
-    // Tự động refresh yêu cầu thanh toán mỗi 10s
     const interval = setInterval(fetchPendingPayments, 10000);
     return () => clearInterval(interval);
-  }, [selectedStatus, searchValue]); // Thêm searchValue vào dep để refresh khi clear search
-
-  // --- Handlers ---
+  }, [selectedStatus, searchValue]);
 
   const handleConfirmPayment = async (paymentId: number) => {
     if (!window.confirm("Xác nhận đã nhận đủ tiền mặt?")) return;
@@ -178,8 +162,6 @@ const StaffOrders: React.FC = () => {
     }
   };
 
-  // --- Helpers ---
-
   const getPaymentRequest = (orderId: number) => {
     return pendingPayments.find(
       (p) => p.orderId === orderId && p.status === "Pending"
@@ -220,8 +202,6 @@ const StaffOrders: React.FC = () => {
     }
   };
 
-  // --- Render ---
-
   return (
     <div className="staff-orders">
       <div className="staff-orders-content-card">
@@ -230,7 +210,6 @@ const StaffOrders: React.FC = () => {
             <i className="fas fa-receipt"></i> Quản Lý Đơn Hàng
           </h1>
 
-          {/* Thông báo có người gọi thanh toán */}
           {pendingPayments.length > 0 && (
             <div
               style={{
@@ -256,7 +235,6 @@ const StaffOrders: React.FC = () => {
         </div>
 
         <div className="staff-orders-controls">
-          {/* Bộ lọc trạng thái */}
           <div className="staff-status-filters">
             <label>Lọc theo trạng thái:</label>
             <div className="staff-status-buttons">
@@ -277,7 +255,7 @@ const StaffOrders: React.FC = () => {
                   }}
                   onClick={() => {
                     setSelectedStatus(status.value);
-                    setSearchValue(""); // Reset search khi chuyển tab
+                    setSearchValue("");
                   }}
                 >
                   {status.label}
@@ -286,7 +264,6 @@ const StaffOrders: React.FC = () => {
             </div>
           </div>
 
-          {/* Tìm kiếm */}
           <div className="staff-search-section">
             <label>Tìm kiếm đơn hàng:</label>
             <div className="staff-search-controls">
@@ -334,7 +311,6 @@ const StaffOrders: React.FC = () => {
           </div>
         </div>
 
-        {/* Danh sách đơn hàng */}
         {loading ? (
           <div className="staff-loading-state">
             <i className="fas fa-spinner fa-spin"></i> Đang tải dữ liệu...
@@ -362,7 +338,6 @@ const StaffOrders: React.FC = () => {
                       : {}
                   }
                 >
-                  {/* Header Card */}
                   <div className="staff-order-header-card">
                     <div className="staff-order-info-main">
                       <h3>
@@ -404,7 +379,6 @@ const StaffOrders: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Customer Info */}
                   <div className="staff-order-customer">
                     <div className="staff-customer-info">
                       <i className="fas fa-user"></i>{" "}
@@ -412,7 +386,6 @@ const StaffOrders: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* --- KHU VỰC XÁC NHẬN THANH TOÁN --- */}
                   {paymentRequest && (
                     <div
                       style={{
@@ -486,7 +459,6 @@ const StaffOrders: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Danh sách món ăn */}
                   <div className="staff-order-items-section">
                     <button
                       className="staff-toggle-items-btn"
@@ -530,7 +502,6 @@ const StaffOrders: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Actions (Cập nhật trạng thái / Hủy) */}
                   <div className="staff-order-actions">
                     <div className="staff-status-update">
                       <label>Cập nhật trạng thái:</label>

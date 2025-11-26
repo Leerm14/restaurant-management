@@ -26,9 +26,7 @@ const NotFoundPage: React.FC = () => {
       container.querySelectorAll<HTMLElement>('[class*="wave"]');
 
     waveElements.forEach((el, index) => {
-      // Tắt transition khi di chuột để mượt mà
       el.style.transition = "none";
-      // Tính toán độ lệch khác nhau cho từng layer để tạo độ sâu
       const depth = index * 0.5;
       el.style.transform = `translate3d(${newX * depth}px, ${
         newY * depth

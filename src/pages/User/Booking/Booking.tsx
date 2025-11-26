@@ -25,7 +25,7 @@ const Booking: React.FC = () => {
   const navigate = useNavigate();
   const fromCart = location.state?.fromCart || false;
 
-  // Fetch tables from API
+  
   useEffect(() => {
     const fetchTables = async () => {
       try {
@@ -52,7 +52,7 @@ const Booking: React.FC = () => {
     fetchTables();
   }, []);
 
-  // Time slots available
+  
   const timeSlots: string[] = [
     "17:00",
     "17:30",
@@ -68,14 +68,14 @@ const Booking: React.FC = () => {
     "22:30",
   ];
 
-  // Handle table selection
+  
   const handleTableSelect = (table: Table) => {
     if (table.status === "Available") {
       setSelectedTable(table.id);
     }
   };
 
-  // Get status color
+  
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Available":
@@ -91,7 +91,7 @@ const Booking: React.FC = () => {
     }
   };
 
-  // Get status text
+  
   const getStatusText = (status: string) => {
     switch (status) {
       case "Available":
@@ -107,12 +107,12 @@ const Booking: React.FC = () => {
     }
   };
 
-  // Handle form submission
+  
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
-    // Validate required fields
+    
     if (!selectedDate) {
       setError("Vui lòng chọn ngày đặt bàn");
       return;
@@ -141,10 +141,10 @@ const Booking: React.FC = () => {
     setLoading(true);
 
     try {
-      // Combine date and time
+      
       const bookingDateTime = `${selectedDate}T${selectedTime}:00`;
 
-      // Validate booking time is in the future
+      
       const bookingDate = new Date(bookingDateTime);
       const now = new Date();
       if (bookingDate <= now) {
@@ -164,7 +164,7 @@ const Booking: React.FC = () => {
 
       alert("Đặt bàn thành công! Chúng tôi sẽ liên hệ với bạn sớm.");
 
-      // Refresh table status after booking
+      
       try {
         const response = await apiClient.get("/api/tables", {
           params: { page: 0, size: 100 },
@@ -183,13 +183,13 @@ const Booking: React.FC = () => {
         console.error("Error refreshing tables:", refreshError);
       }
 
-      // Reset form
+      
       setSelectedDate("");
       setSelectedTime("");
       setSelectedTable(null);
       setNumGuests(2);
 
-      // Navigate back to cart if came from cart
+      
       if (fromCart) {
         navigate("/cart");
       }
@@ -198,7 +198,7 @@ const Booking: React.FC = () => {
       const errorMessage =
         err.response?.data?.message || "Không thể tạo đặt bàn";
 
-      // Translate common error messages
+      
       if (errorMessage.includes("not available")) {
         setError("Bàn này đã được đặt. Vui lòng chọn bàn khác.");
       } else if (errorMessage.includes("capacity")) {
@@ -248,7 +248,7 @@ const Booking: React.FC = () => {
         )}
 
         <form className="booking-form" onSubmit={handleSubmit}>
-          {/* Date Selection */}
+          
           <div className="booking-form-section">
             <h3 className="booking-section-title">
               Chọn ngày <span style={{ color: "#ef4444" }}>*</span>
@@ -264,7 +264,7 @@ const Booking: React.FC = () => {
             </div>
           </div>
 
-          {/* Time Selection */}
+          
           <div className="booking-form-section">
             <h3 className="booking-section-title">
               Chọn giờ <span style={{ color: "#ef4444" }}>*</span>
@@ -285,7 +285,7 @@ const Booking: React.FC = () => {
             </div>
           </div>
 
-          {/* Table Selection */}
+          
           <div className="booking-form-section">
             <h3 className="booking-section-title">
               Chọn bàn <span style={{ color: "#ef4444" }}>*</span>
@@ -337,7 +337,7 @@ const Booking: React.FC = () => {
             </div>
           </div>
 
-          {/* Customer Information */}
+          
           <div className="booking-form-section">
             <h3 className="booking-section-title">Thông tin đặt bàn</h3>
             <div className="booking-customer-info">
@@ -357,7 +357,7 @@ const Booking: React.FC = () => {
             </div>
           </div>
 
-          {/* Submit Button */}
+          
           <div className="booking-form-submit">
             <Button variant="primary" disabled={loading}>
               {loading ? "Đang xử lý..." : "✓ Xác nhận đặt bàn"}
