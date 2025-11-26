@@ -38,7 +38,7 @@ const StaffOrders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [pendingPayments, setPendingPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<string>("Completed");
+  const [selectedStatus, setSelectedStatus] = useState<string>("Pending");
 
   const [searchType, setSearchType] = useState<"email" | "phone" | "table">(
     "email"
@@ -155,8 +155,8 @@ const StaffOrders: React.FC = () => {
 
   const handleUpdateStatus = async (orderId: number, newStatus: string) => {
     try {
-      await apiClient.patch(`/api/orders/${orderId}/status`, null, {
-        params: { status: newStatus },
+      await apiClient.patch(`/api/orders/${orderId}/status`, {
+        status: newStatus,
       });
       alert("Cập nhật trạng thái thành công!");
       if (!searchValue) fetchOrdersByStatus(selectedStatus);
