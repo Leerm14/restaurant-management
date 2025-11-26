@@ -56,7 +56,7 @@ const OrderHistory: React.FC = () => {
         const ordersData = Array.isArray(response.data)
           ? response.data
           : response.data.content || [];
-
+        console.log("Fetched orders:", ordersData);
         // Sắp xếp đơn mới nhất lên đầu
         setOrders(ordersData.reverse());
       } catch (error) {

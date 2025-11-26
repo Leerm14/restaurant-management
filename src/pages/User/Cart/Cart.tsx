@@ -132,17 +132,6 @@ const Cart: React.FC = () => {
 
       if (response.status === 201) {
         // Nếu là Dinein, cập nhật trạng thái booking thành Completed
-        if (orderType === "Dinein" && activeBooking) {
-          try {
-            await apiClient.put(`/api/bookings/${activeBooking.id}`, {
-              ...activeBooking,
-              status: "Completed",
-            });
-          } catch (error) {
-            console.error("Error updating booking status:", error);
-          }
-        }
-
         alert("Đặt món thành công!");
         clearCart(); // Xóa giỏ hàng sau khi đặt thành công
         setActiveBooking(null); // Reset booking state

@@ -101,6 +101,7 @@ const StaffOrders: React.FC = () => {
     try {
       setLoading(true);
       const response = await apiClient.get(`/api/orders/status/${status}`);
+      console.log("Fetched orders by status:", response.data);
       setOrders(safeData(response.data));
     } catch (error) {
       console.error("Error fetching orders:", error);
