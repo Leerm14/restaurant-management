@@ -25,6 +25,7 @@ interface Order {
   totalAmount: number;
   createdAt: string;
   orderItems: OrderItem[];
+  paymentStatus?: string;
 }
 
 const OrderHistory: React.FC = () => {
@@ -349,23 +350,39 @@ const OrderHistory: React.FC = () => {
                         )}
 
                         {/* Logic hiển thị nút Thanh toán (Chỉ khi Completed) */}
-                        {order.status === "Completed" && (
-                          <button
-                            className="action-button pay-btn"
+                        {order.status === "Completed" &&
+                          order.paymentStatus !== "Successful" && (
+                            <button
+                              className="action-button pay-btn"
+                              style={{
+                                color: "#fff",
+                                backgroundColor: "#f39c12",
+                                border: "none",
+                                borderRadius: "4px",
+                                padding: "6px 12px",
+                                marginLeft: "5px",
+                                fontWeight: "500",
+                                cursor: "pointer",
+                              }}
+                              onClick={() => openPaymentModal(order)}
+                            >
+                              💳 Thanh toán
+                            </button>
+                          )}
+                        {order.paymentStatus === "Successful" && (
+                          <span
                             style={{
-                              color: "#fff",
-                              backgroundColor: "#f39c12",
-                              border: "none",
+                              color: "#27ae60",
+                              fontWeight: "bold",
+                              fontSize: "0.85rem",
+                              marginLeft: "10px",
+                              border: "1px solid #27ae60",
+                              padding: "4px 8px",
                               borderRadius: "4px",
-                              padding: "6px 12px",
-                              marginLeft: "5px",
-                              fontWeight: "500",
-                              cursor: "pointer",
                             }}
-                            onClick={() => openPaymentModal(order)}
                           >
-                            💳 Thanh toán
-                          </button>
+                            ✓ Đã thanh toán
+                          </span>
                         )}
                       </div>
                     </td>

@@ -1,16 +1,67 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import apiClient from "../../../services/api";
 import "./PaymentSuccess.css";
 
 const PaymentSuccess: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
+  // Thêm trạng thái đang xác thực
+  const [isValidating, setIsValidating] = useState(true);
+
   const orderId = searchParams.get("orderId");
   const amount = searchParams.get("amount");
   const transactionId = searchParams.get("transactionId");
 
-  useEffect(() => {}, []);
+  useEffect(() => {
+    const validateAndConfirmPayment = async () => {
+      // Nếu không có orderId, đuổi về trang chủ hoặc trang lỗi
+      if (!orderId) {
+        navigate("/");
+        return;
+      }
+
+      try {
+        // Bước 1: Lấy thông tin payment hiện tại từ Database
+        const paymentRes = await apiClient.get(
+          `/api/payments/order/${orderId}`
+        );
+        const payment = paymentRes.data;
+
+        if (payment.status === "Successful") {
+          // Trường hợp 1: Đã thành công (ví dụ Webhook đã chạy trước đó)
+          setIsValidating(false); // Cho phép hiển thị trang
+        } else if (payment.status === "Pending") {
+          // Trường hợp 2: Vẫn đang chờ (Webhook chưa tới hoặc chạy Localhost)
+          // Gọi API confirm để cập nhật trạng thái
+          try {
+            await apiClient.patch(`/api/payments/${payment.id}/confirm`);
+            // Confirm thành công -> Cho phép hiển thị
+            setIsValidating(false);
+            console.log("Đã xác nhận thanh toán thành công từ Client.");
+          } catch (err) {
+            console.error("Lỗi khi confirm payment:", err);
+            // Confirm thất bại -> Đẩy sang trang Failed
+            navigate(
+              `/payment/payment-failed?orderId=${orderId}&reason=ConfirmFailed`
+            );
+          }
+        } else {
+          // Trường hợp 3: Trạng thái là Failed hoặc Cancelled
+          // Đẩy sang trang Failed ngay lập tức
+          navigate(
+            `/payment/payment-failed?orderId=${orderId}&reason=Status_${payment.status}`
+          );
+        }
+      } catch (error) {
+        console.error("Lỗi kết nối hoặc không tìm thấy đơn hàng:", error);
+        navigate("/menu");
+      }
+    };
+
+    validateAndConfirmPayment();
+  }, [orderId, navigate]);
 
   const formatCurrency = (amount: string | null) => {
     if (!amount) return "0đ";
@@ -20,6 +71,40 @@ const PaymentSuccess: React.FC = () => {
     }).format(Number(amount));
   };
 
+  // --- MÀN HÌNH CHỜ (LOADING) ---
+  // Nếu đang validate, hiển thị spinner thay vì nội dung thành công
+  if (isValidating) {
+    return (
+      <div className="payment-result-page success">
+        <div className="payment-result-container">
+          <div
+            className="payment-result-card"
+            style={{ textAlign: "center", padding: "60px 20px" }}
+          >
+            <div
+              className="spinner"
+              style={{
+                border: "4px solid #f3f3f3",
+                borderTop: "4px solid #11998e",
+                borderRadius: "50%",
+                width: "50px",
+                height: "50px",
+                animation: "spin 1s linear infinite",
+                margin: "0 auto 20px",
+              }}
+            ></div>
+            <h2 style={{ color: "#2c3e50", fontSize: "1.5rem" }}>
+              Đang xác thực giao dịch...
+            </h2>
+            <p style={{ color: "#6c757d" }}>Vui lòng không tắt trình duyệt.</p>
+          </div>
+        </div>
+        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  // --- MÀN HÌNH THÀNH CÔNG (Chỉ hiện khi isValidating = false) ---
   return (
     <div className="payment-result-page success">
       <div className="payment-result-container">

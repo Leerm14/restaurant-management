@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import apiClient from "../../../services/api"; // Import apiClient
 import "./PaymentFailed.css";
 
 const PaymentFailed: React.FC = () => {
@@ -9,6 +10,32 @@ const PaymentFailed: React.FC = () => {
   const orderId = searchParams.get("orderId");
   const reason = searchParams.get("reason");
   const errorCode = searchParams.get("errorCode");
+
+  // --- THÊM ĐOẠN CODE NÀY ---
+  useEffect(() => {
+    const updatePaymentToFailed = async () => {
+      if (!orderId) return;
+
+      try {
+        // 1. Lấy thông tin payment dựa trên orderId
+        const paymentRes = await apiClient.get(
+          `/api/payments/order/${orderId}`
+        );
+        const payment = paymentRes.data;
+
+        // 2. Nếu trạng thái đang là Pending thì cập nhật thành Failed
+        if (payment && payment.status === "Pending") {
+          await apiClient.patch(`/api/payments/${payment.id}/fail`);
+          console.log("Đã cập nhật trạng thái thanh toán thành Failed");
+        }
+      } catch (error) {
+        console.error("Lỗi khi cập nhật trạng thái thanh toán:", error);
+      }
+    };
+
+    updatePaymentToFailed();
+  }, [orderId]);
+  // ---------------------------
 
   return (
     <div className="payment-result-page failed">
@@ -31,7 +58,7 @@ const PaymentFailed: React.FC = () => {
 
           <h1 className="result-title">Thanh toán thất bại!</h1>
           <p className="result-message">
-            Rất tiếc, giao dịch của bạn không thành công. Vui lòng thử lại.
+            Rất tiếc, giao dịch của bạn không thành công hoặc đã bị hủy.
           </p>
 
           <div className="payment-details">
@@ -66,9 +93,9 @@ const PaymentFailed: React.FC = () => {
               <strong>Một số lý do có thể xảy ra:</strong>
             </p>
             <ul className="error-list">
+              <li>Bạn đã hủy giao dịch</li>
               <li>Số dư tài khoản không đủ</li>
               <li>Thông tin thẻ không chính xác</li>
-              <li>Giao dịch bị ngân hàng từ chối</li>
               <li>Phiên thanh toán đã hết hạn</li>
             </ul>
           </div>
