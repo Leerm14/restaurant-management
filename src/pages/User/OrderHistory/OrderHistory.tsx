@@ -53,12 +53,9 @@ const OrderHistory: React.FC = () => {
 
       try {
         const response = await apiClient.get(`/api/orders/user/${userId}`);
-        const ordersData = Array.isArray(response.data)
-          ? response.data
-          : response.data.content || [];
-        console.log("Fetched orders:", ordersData);
+        console.log("Fetched orders:", response.data);
         // Sắp xếp đơn mới nhất lên đầu
-        setOrders(ordersData.reverse());
+        setOrders(response.data.reverse());
       } catch (error) {
         console.error("Error fetching orders:", error);
       } finally {

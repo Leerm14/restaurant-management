@@ -1,7 +1,7 @@
 import axios from "axios";
 import { auth } from "../firebaseConfig";
 const apiClient = axios.create({
-  baseURL: "https://restaurant-back-end-production.up.railway.app",
+  baseURL: "https://restaurantbackend.up.railway.app/",
 });
 
 apiClient.interceptors.request.use(
