@@ -2,18 +2,13 @@ import React, { useState, useEffect } from "react";
 import "./StaffOrders.css";
 import apiClient from "../../services/api";
 
-interface Order {
+// --- Interfaces ---
+interface Payment {
   id: number;
-  userId: number;
-  userFullName: string;
-  tableId: number | null;
-  tableName: string | null;
-  totalAmount: number;
-  status: "Pending" | "Preparing" | "Ready" | "Completed" | "Cancelled";
-  orderType: "Dinein" | "Takeaway" | "Delivery";
-  createdAt: string;
-  orderItems: OrderItem[];
-  bookingTime?: string | null;
+  orderId: number;
+  amount: number;
+  paymentMethod: string;
+  status: "Pending" | "Successful" | "Failed";
 }
 
 interface OrderItem {
@@ -25,10 +20,26 @@ interface OrderItem {
   subtotal: number;
 }
 
+interface Order {
+  id: number;
+  userId: number;
+  userFullName: string;
+  tableId: number | null;
+  tableName: string | null;
+  totalAmount: number;
+  status: string; // Pending, Confirmed, etc.
+  orderType: string; // Dinein, Takeaway
+  createdAt: string;
+  orderItems: OrderItem[];
+}
+
 const StaffOrders: React.FC = () => {
+  // --- State ---
   const [orders, setOrders] = useState<Order[]>([]);
+  const [pendingPayments, setPendingPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<string>("Pending");
+  const [selectedStatus, setSelectedStatus] = useState<string>("Completed");
+
   const [searchType, setSearchType] = useState<"email" | "phone" | "table">(
     "email"
   );
@@ -43,24 +54,16 @@ const StaffOrders: React.FC = () => {
     { value: "Cancelled", label: "Đã hủy", color: "#e74c3c" },
   ];
 
-  const fetchOrdersByStatus = async (status: string) => {
-    try {
-      setLoading(true);
-      const response = await apiClient.get(`/api/orders/status/${status}`);
-      setOrders(response.data);
-      console.log(response.data);
-    } catch (error) {
-      console.error("Error fetching orders:", error);
-      alert("Có lỗi khi tải đơn hàng!");
-    } finally {
-      setLoading(false);
-    }
+  // --- API Helpers ---
+
+  // Hàm xử lý dữ liệu an toàn: đảm bảo luôn trả về mảng
+  const safeData = (data: any) => {
+    if (Array.isArray(data)) return data;
+    if (data && Array.isArray(data.content)) return data.content;
+    return [];
   };
 
-  useEffect(() => {
-    fetchOrdersByStatus(selectedStatus);
-  }, [selectedStatus]);
-
+  // 1. Tìm kiếm đơn hàng
   const handleSearch = async () => {
     if (!searchValue.trim()) {
       alert("Vui lòng nhập thông tin tìm kiếm!");
@@ -83,7 +86,7 @@ const StaffOrders: React.FC = () => {
         response = await apiClient.get(`/api/orders/table/${searchValue}`);
       }
 
-      setOrders(response?.data || []);
+      setOrders(safeData(response?.data));
     } catch (error) {
       console.error("Error searching orders:", error);
       alert("Không tìm thấy đơn hàng!");
@@ -93,17 +96,71 @@ const StaffOrders: React.FC = () => {
     }
   };
 
+  // 2. Lấy đơn hàng theo trạng thái
+  const fetchOrdersByStatus = async (status: string) => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get(`/api/orders/status/${status}`);
+      setOrders(safeData(response.data));
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      setOrders([]); // Reset nếu lỗi để tránh crash
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 3. Lấy danh sách yêu cầu thanh toán (Payment Pending)
+  const fetchPendingPayments = async () => {
+    try {
+      const response = await apiClient.get("/api/payments/status/Pending");
+      setPendingPayments(safeData(response.data));
+    } catch (error) {
+      console.error("Error fetching payments:", error);
+      // Không setPendingPayments([]) ở đây để tránh nhấp nháy nếu lỗi mạng tạm thời
+    }
+  };
+
+  // --- Effects ---
+
+  useEffect(() => {
+    // Chỉ load theo status nếu không đang tìm kiếm
+    if (!searchValue) {
+      fetchOrdersByStatus(selectedStatus);
+    }
+    fetchPendingPayments();
+
+    // Tự động refresh yêu cầu thanh toán mỗi 10s
+    const interval = setInterval(fetchPendingPayments, 10000);
+    return () => clearInterval(interval);
+  }, [selectedStatus, searchValue]); // Thêm searchValue vào dep để refresh khi clear search
+
+  // --- Handlers ---
+
+  const handleConfirmPayment = async (paymentId: number) => {
+    if (!window.confirm("Xác nhận đã nhận đủ tiền mặt?")) return;
+    try {
+      await apiClient.patch(`/api/payments/${paymentId}/confirm`);
+      alert("Xác nhận thanh toán thành công!");
+      fetchPendingPayments();
+      if (!searchValue) fetchOrdersByStatus(selectedStatus);
+    } catch (error: any) {
+      alert(
+        "Lỗi xác nhận: " +
+          (error.response?.data?.message || "Lỗi không xác định")
+      );
+    }
+  };
+
   const handleUpdateStatus = async (orderId: number, newStatus: string) => {
     try {
       await apiClient.patch(`/api/orders/${orderId}/status`, null, {
         params: { status: newStatus },
       });
-      console.log(`Order ${orderId} status updated to ${newStatus}`);
-      alert("Cập nhật trạng thái đơn hàng thành công!");
-      fetchOrdersByStatus(selectedStatus);
+      alert("Cập nhật trạng thái thành công!");
+      if (!searchValue) fetchOrdersByStatus(selectedStatus);
     } catch (error) {
-      console.error("Error updating order status:", error);
-      alert("Có lỗi khi cập nhật trạng thái!");
+      alert("Lỗi cập nhật trạng thái");
     }
   };
 
@@ -112,7 +169,7 @@ const StaffOrders: React.FC = () => {
       try {
         await apiClient.patch(`/api/orders/${orderId}/cancel`);
         alert("Đã hủy đơn hàng thành công!");
-        fetchOrdersByStatus(selectedStatus);
+        if (!searchValue) fetchOrdersByStatus(selectedStatus);
       } catch (error) {
         console.error("Error cancelling order:", error);
         alert("Có lỗi khi hủy đơn hàng!");
@@ -120,30 +177,36 @@ const StaffOrders: React.FC = () => {
     }
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("vi-VN").format(price) + " VNĐ";
+  // --- Helpers ---
+
+  const getPaymentRequest = (orderId: number) => {
+    return pendingPayments.find(
+      (p) => p.orderId === orderId && p.status === "Pending"
+    );
   };
+
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat("vi-VN").format(price) + " VNĐ";
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString("vi-VN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    if (!dateString) return "N/A";
+    try {
+      return new Date(dateString).toLocaleString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch (e) {
+      return dateString;
+    }
   };
 
-  const getStatusColor = (status: string) => {
-    const statusOption = statusOptions.find((s) => s.value === status);
-    return statusOption?.color || "#95a5a6";
-  };
-
-  const getStatusLabel = (status: string) => {
-    const statusOption = statusOptions.find((s) => s.value === status);
-    return statusOption?.label || status;
-  };
+  const getStatusColor = (status: string) =>
+    statusOptions.find((s) => s.value === status)?.color || "#95a5a6";
+  const getStatusLabel = (status: string) =>
+    statusOptions.find((s) => s.value === status)?.label || status;
 
   const getOrderTypeLabel = (type: string) => {
     switch (type) {
@@ -156,6 +219,8 @@ const StaffOrders: React.FC = () => {
     }
   };
 
+  // --- Render ---
+
   return (
     <div className="staff-orders">
       <div className="staff-orders-content-card">
@@ -163,9 +228,34 @@ const StaffOrders: React.FC = () => {
           <h1>
             <i className="fas fa-receipt"></i> Quản Lý Đơn Hàng
           </h1>
+
+          {/* Thông báo có người gọi thanh toán */}
+          {pendingPayments.length > 0 && (
+            <div
+              style={{
+                backgroundColor: "#e74c3c",
+                color: "white",
+                padding: "12px 20px",
+                borderRadius: "8px",
+                marginTop: "15px",
+                animation: "pulse 2s infinite",
+                fontWeight: "bold",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              <i className="fas fa-bell"></i>
+              <span>
+                Có {pendingPayments.length} bàn đang gọi thanh toán! Vui lòng
+                kiểm tra các đơn hàng.
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="staff-orders-controls">
+          {/* Bộ lọc trạng thái */}
           <div className="staff-status-filters">
             <label>Lọc theo trạng thái:</label>
             <div className="staff-status-buttons">
@@ -184,7 +274,10 @@ const StaffOrders: React.FC = () => {
                     color:
                       selectedStatus === status.value ? "white" : status.color,
                   }}
-                  onClick={() => setSelectedStatus(status.value)}
+                  onClick={() => {
+                    setSelectedStatus(status.value);
+                    setSearchValue(""); // Reset search khi chuyển tab
+                  }}
                 >
                   {status.label}
                 </button>
@@ -192,6 +285,7 @@ const StaffOrders: React.FC = () => {
             </div>
           </div>
 
+          {/* Tìm kiếm */}
           <div className="staff-search-section">
             <label>Tìm kiếm đơn hàng:</label>
             <div className="staff-search-controls">
@@ -223,137 +317,250 @@ const StaffOrders: React.FC = () => {
               <button className="staff-btn-search" onClick={handleSearch}>
                 <i className="fas fa-search"></i> Tìm kiếm
               </button>
+              {searchValue && (
+                <button
+                  className="staff-btn-search"
+                  style={{ backgroundColor: "#6c757d", marginLeft: "10px" }}
+                  onClick={() => {
+                    setSearchValue("");
+                    fetchOrdersByStatus(selectedStatus);
+                  }}
+                >
+                  Hủy tìm
+                </button>
+              )}
             </div>
           </div>
         </div>
 
+        {/* Danh sách đơn hàng */}
         {loading ? (
           <div className="staff-loading-state">
-            <i className="fas fa-spinner fa-spin"></i> Đang tải...
+            <i className="fas fa-spinner fa-spin"></i> Đang tải dữ liệu...
           </div>
-        ) : orders.length === 0 ? (
+        ) : !orders || orders.length === 0 ? (
           <div className="staff-empty-state">
             <i className="fas fa-inbox"></i>
             <p>Không có đơn hàng nào</p>
           </div>
         ) : (
           <div className="staff-orders-list">
-            {orders.map((order) => (
-              <div key={order.id} className="staff-order-card">
-                <div className="staff-order-header-card">
-                  <div className="staff-order-info-main">
-                    <h3>
-                      <i className="fas fa-hashtag"></i> Đơn hàng #{order.id}
-                    </h3>
-                    <div className="staff-order-meta">
-                      <span className="staff-order-type">
-                        <i className="fas fa-concierge-bell"></i>
-                        {getOrderTypeLabel(order.orderType)}
-                      </span>
-                      {order.tableName && (
-                        <span className="staff-table-info">
-                          <i className="fas fa-chair"></i> {order.tableName}
+            {orders.map((order) => {
+              const paymentRequest = getPaymentRequest(order.id);
+
+              return (
+                <div
+                  key={order.id}
+                  className="staff-order-card"
+                  style={
+                    paymentRequest
+                      ? {
+                          border: "2px solid #e74c3c",
+                          backgroundColor: "#fff5f5",
+                        }
+                      : {}
+                  }
+                >
+                  {/* Header Card */}
+                  <div className="staff-order-header-card">
+                    <div className="staff-order-info-main">
+                      <h3>
+                        <i className="fas fa-hashtag"></i> Đơn hàng #{order.id}
+                        {paymentRequest && (
+                          <span
+                            style={{
+                              color: "#e74c3c",
+                              marginLeft: "10px",
+                              fontSize: "0.85rem",
+                              fontWeight: "bold",
+                            }}
+                          >
+                            (KHÁCH GỌI TRẢ TIỀN)
+                          </span>
+                        )}
+                      </h3>
+                      <div className="staff-order-meta">
+                        <span className="staff-order-type">
+                          <i className="fas fa-concierge-bell"></i>{" "}
+                          {getOrderTypeLabel(order.orderType)}
                         </span>
-                      )}
-                      <span className="staff-order-date">
-                        {getOrderTypeLabel(order.orderType) === "Tại chỗ" ? (
-                          <div>
-                            <i className="fas fa-clock"></i>{" "}
-                            {formatDate(order.createdAt)}
-                          </div>
-                        ) : null}
-                      </span>
-                    </div>
-                  </div>
-                  <div
-                    className="staff-order-status-badge"
-                    style={{
-                      backgroundColor: getStatusColor(order.status),
-                    }}
-                  >
-                    {getStatusLabel(order.status)}
-                  </div>
-                </div>
-
-                <div className="staff-order-customer">
-                  <div className="staff-customer-info">
-                    <i className="fas fa-user"></i>
-                    <span>{order.userFullName}</span>
-                  </div>
-                </div>
-
-                <div className="staff-order-items-section">
-                  <button
-                    className="staff-toggle-items-btn"
-                    onClick={() =>
-                      setExpandedOrder(
-                        expandedOrder === order.id ? null : order.id
-                      )
-                    }
-                  >
-                    <i
-                      className={`fas fa-chevron-${
-                        expandedOrder === order.id ? "up" : "down"
-                      }`}
-                    ></i>
-                    {expandedOrder === order.id
-                      ? "Ẩn chi tiết"
-                      : "Xem chi tiết"}{" "}
-                    (món)
-                  </button>
-
-                  {expandedOrder === order.id && (
-                    <div className="staff-order-items-list">
-                      {order.orderItems.map((item) => (
-                        <div key={item.id} className="staff-order-item">
-                          <span className="staff-item-name">
-                            {item.quantity}x {item.menuItemName}
+                        {order.tableName && (
+                          <span className="staff-table-info">
+                            <i className="fas fa-chair"></i> {order.tableName}
                           </span>
-                          <span className="staff-item-price">
-                            {formatPrice(item.subtotal)}
-                          </span>
-                        </div>
-                      ))}
-                      <div className="staff-order-total">
-                        <span>Tổng cộng:</span>
-                        <span className="staff-total-amount">
-                          {formatPrice(order.totalAmount)}
+                        )}
+                        <span className="staff-order-date">
+                          <i className="fas fa-clock"></i>{" "}
+                          {formatDate(order.createdAt)}
                         </span>
                       </div>
                     </div>
-                  )}
-                </div>
-
-                <div className="staff-order-actions">
-                  <div className="staff-status-update">
-                    <label>Cập nhật trạng thái:</label>
-                    <select
-                      value={order.status}
-                      onChange={(e) =>
-                        handleUpdateStatus(order.id, e.target.value)
-                      }
-                      className="staff-status-select"
-                      disabled={order.status === "Cancelled"}
+                    <div
+                      className="staff-order-status-badge"
+                      style={{ backgroundColor: getStatusColor(order.status) }}
                     >
-                      {statusOptions.map((status) => (
-                        <option key={status.value} value={status.value}>
-                          {status.label}
-                        </option>
-                      ))}
-                    </select>
+                      {getStatusLabel(order.status)}
+                    </div>
                   </div>
-                  {order.status !== "Cancelled" &&
-                    order.status !== "Completed" && (
+
+                  {/* Customer Info */}
+                  <div className="staff-order-customer">
+                    <div className="staff-customer-info">
+                      <i className="fas fa-user"></i>{" "}
+                      <span>{order.userFullName || "Khách lẻ"}</span>
+                    </div>
+                  </div>
+
+                  {/* --- KHU VỰC XÁC NHẬN THANH TOÁN --- */}
+                  {paymentRequest && (
+                    <div
+                      style={{
+                        margin: "15px 0",
+                        padding: "15px",
+                        backgroundColor: "#fff",
+                        border: "1px dashed #e74c3c",
+                        borderRadius: "8px",
+                        display: "flex",
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                        gap: "10px",
+                      }}
+                    >
+                      <div>
+                        <p
+                          style={{
+                            fontWeight: "bold",
+                            color: "#c0392b",
+                            margin: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "5px",
+                          }}
+                        >
+                          <i className="fas fa-money-bill-wave"></i> Yêu cầu
+                          thanh toán:
+                        </p>
+                        <p style={{ margin: "5px 0" }}>
+                          Số tiền:{" "}
+                          <strong style={{ fontSize: "1.1rem" }}>
+                            {formatPrice(paymentRequest.amount)}
+                          </strong>
+                        </p>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: "0.9rem",
+                            color: "#555",
+                          }}
+                        >
+                          Phương thức:{" "}
+                          <strong>
+                            {paymentRequest.paymentMethod === "Cash"
+                              ? "Tiền mặt"
+                              : paymentRequest.paymentMethod}
+                          </strong>
+                        </p>
+                      </div>
                       <button
-                        className="staff-btn-cancel-order"
-                        onClick={() => handleCancelOrder(order.id)}
+                        onClick={() => handleConfirmPayment(paymentRequest.id)}
+                        style={{
+                          backgroundColor: "#27ae60",
+                          color: "white",
+                          padding: "10px 20px",
+                          border: "none",
+                          borderRadius: "6px",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          fontWeight: "bold",
+                          boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+                        }}
                       >
-                        <i className="fas fa-times-circle"></i> Hủy đơn hàng
+                        <i className="fas fa-check-circle"></i> Xác nhận đã thu
+                        tiền
                       </button>
+                    </div>
+                  )}
+
+                  {/* Danh sách món ăn */}
+                  <div className="staff-order-items-section">
+                    <button
+                      className="staff-toggle-items-btn"
+                      onClick={() =>
+                        setExpandedOrder(
+                          expandedOrder === order.id ? null : order.id
+                        )
+                      }
+                    >
+                      <i
+                        className={`fas fa-chevron-${
+                          expandedOrder === order.id ? "up" : "down"
+                        }`}
+                      ></i>
+                      {expandedOrder === order.id
+                        ? "Ẩn chi tiết"
+                        : "Xem chi tiết"}{" "}
+                      (món)
+                    </button>
+
+                    {expandedOrder === order.id && (
+                      <div className="staff-order-items-list">
+                        {order.orderItems &&
+                          order.orderItems.map((item) => (
+                            <div key={item.id} className="staff-order-item">
+                              <span className="staff-item-name">
+                                {item.quantity}x {item.menuItemName}
+                              </span>
+                              <span className="staff-item-price">
+                                {formatPrice(item.subtotal)}
+                              </span>
+                            </div>
+                          ))}
+                        <div className="staff-order-total">
+                          <span>Tổng cộng:</span>
+                          <span className="staff-total-amount">
+                            {formatPrice(order.totalAmount)}
+                          </span>
+                        </div>
+                      </div>
                     )}
+                  </div>
+
+                  {/* Actions (Cập nhật trạng thái / Hủy) */}
+                  <div className="staff-order-actions">
+                    <div className="staff-status-update">
+                      <label>Cập nhật trạng thái:</label>
+                      <select
+                        value={order.status}
+                        onChange={(e) =>
+                          handleUpdateStatus(order.id, e.target.value)
+                        }
+                        className="staff-status-select"
+                        disabled={order.status === "Cancelled"}
+                      >
+                        {statusOptions.map((status) => (
+                          <option key={status.value} value={status.value}>
+                            {status.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {order.status !== "Cancelled" &&
+                      order.status !== "Completed" && (
+                        <button
+                          className="staff-btn-cancel-order"
+                          onClick={() => handleCancelOrder(order.id)}
+                        >
+                          <i className="fas fa-times-circle"></i> Hủy đơn hàng
+                        </button>
+                      )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
