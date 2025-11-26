@@ -9,35 +9,33 @@ const NotFoundPage: React.FC = () => {
     const container = containerRef.current;
     if (!container) return;
 
-    // Kiểm tra độ rộng màn hình (logic tương tự windowWidth < 768)
+    // Chỉ áp dụng hiệu ứng parallax trên màn hình lớn
     if (window.innerWidth < 768) return;
 
-    // Lấy kích thước và vị trí của container
     const rect = container.getBoundingClientRect();
     const halfFieldWidth = rect.width / 2;
     const halfFieldHeight = rect.height / 2;
 
-    // Tính toán vị trí chuột tương đối trong container
-    // e.clientX là tọa độ viewport, trừ đi rect.left để ra tọa độ trong thẻ div
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
 
     const newX = (mouseX - halfFieldWidth) / 30;
     const newY = (mouseY - halfFieldHeight) / 30;
 
-    // Tìm tất cả các phần tử có class chứa chữ "wave" bên trong container
     const waveElements =
       container.querySelectorAll<HTMLElement>('[class*="wave"]');
 
     waveElements.forEach((el, index) => {
-      el.style.transition = ""; // Tắt transition để di chuyển mượt theo chuột
-      el.style.transform = `translate3d(${index * newX}px, ${
-        index * newY
+      // Tắt transition khi di chuột để mượt mà
+      el.style.transition = "none";
+      // Tính toán độ lệch khác nhau cho từng layer để tạo độ sâu
+      const depth = index * 0.5;
+      el.style.transform = `translate3d(${newX * depth}px, ${
+        newY * depth
       }px, 0px)`;
     });
   }, []);
 
-  // Xử lý khi chuột rời khỏi vùng container (Reset vị trí)
   const handleMouseLeave = useCallback(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -46,16 +44,9 @@ const NotFoundPage: React.FC = () => {
       container.querySelectorAll<HTMLElement>('[class*="wave"]');
 
     waveElements.forEach((el) => {
-      el.style.transform = "translate(0px, 0px)";
-      el.style.transition = "all 0.7s";
+      el.style.transition = "transform 0.7s ease-out";
+      el.style.transform = "translate3d(0, 0, 0)";
     });
-
-    // Sau 0.7s (timeout), xóa transition để chuẩn bị cho lần di chuột tiếp theo
-    setTimeout(() => {
-      waveElements.forEach((el) => {
-        el.style.transition = "";
-      });
-    }, 700);
   }, []);
 
   return (
@@ -69,10 +60,11 @@ const NotFoundPage: React.FC = () => {
       <div className="wave-7"></div>
       <div className="wave-6"></div>
 
-      <Link to="/" className="wave-island">
+      <Link to="/" className="wave-island" title="Trở về trang chủ">
         <img
-          src="http://res.cloudinary.com/andrewhani/image/upload/v1524501929/404/island.svg"
+          src="https://res.cloudinary.com/andrewhani/image/upload/v1524501929/404/island.svg"
           alt="Island"
+          style={{ width: "100%", display: "block" }}
         />
       </Link>
 
@@ -87,7 +79,7 @@ const NotFoundPage: React.FC = () => {
       <div className="wave-boat">
         <img
           className="boat"
-          src="http://res.cloudinary.com/andrewhani/image/upload/v1524501894/404/boat.svg"
+          src="https://res.cloudinary.com/andrewhani/image/upload/v1524501894/404/boat.svg"
           alt="Boat"
         />
       </div>
@@ -97,8 +89,10 @@ const NotFoundPage: React.FC = () => {
       <div className="wave-1"></div>
 
       <div className="wave-message">
-        <p>You're lost</p>
-        <p>Click on the island to return</p>
+        <p>Bạn đã bị lạc đường?</p>
+        <p style={{ fontSize: "1.5rem" }}>
+          Nhấn vào hòn đảo để quay về đất liền
+        </p>
       </div>
     </div>
   );
