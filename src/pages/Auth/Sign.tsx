@@ -88,7 +88,7 @@ const Sign: React.FC = () => {
           email: signUpEmail,
           phoneNumber: signUpPhone,
         });
-        setSuccess("Đăng ký thành công!");
+        setSuccess("Đăng ký thành công! Vui lòng kiểm tra email để xác nhận.");
         console.log(
           "User created in Firebase and Backend:",
           userCredential.user
@@ -148,10 +148,10 @@ const Sign: React.FC = () => {
       );
       await login();
       console.log("User signed in:", userCredential.user);
-      // if (!userCredential.user.emailVerified) {
-      //   setError("Vui lòng xác nhận email trước khi đăng nhập.");
-      //   return;
-      // }
+      if (!userCredential.user.emailVerified) {
+        setError("Vui lòng xác nhận email trước khi đăng nhập.");
+        return;
+      }
       setSuccess("Đăng nhập thành công!");
       setTimeout(() => {
         navigate("/");
