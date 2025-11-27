@@ -379,6 +379,7 @@
   border: 1px solid rgba(99, 102, 241, 0.06);
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .menu-grid-highlight .menu-item-highlight::before {

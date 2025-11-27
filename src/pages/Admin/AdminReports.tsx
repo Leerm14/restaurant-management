@@ -9,10 +9,12 @@ interface RevenueReport {
   averageTransactionValue: number;
   cashRevenue: number;
   cashTransactions: number;
-  creditCardRevenue: number;
-  creditCardTransactions: number;
+  // Backend mapping: PayOS -> qrCodeRevenue
   qrCodeRevenue: number;
   qrCodeTransactions: number;
+  // Các trường này hiện trả về 0 từ backend
+  creditCardRevenue: number;
+  creditCardTransactions: number;
 }
 
 interface MonthlyStats {
@@ -172,6 +174,7 @@ const AdminReports: React.FC = () => {
         </div>
       )}
 
+      {/* --- PHẦN 1: BỘ LỌC THÁNG/NĂM CHO THỐNG KÊ ĐƠN HÀNG --- */}
       <div
         style={{
           background: "white",
@@ -238,6 +241,7 @@ const AdminReports: React.FC = () => {
         </button>
       </div>
 
+      {/* --- HIỂN THỊ THỐNG KÊ ĐƠN HÀNG --- */}
       {monthlyStats && (
         <div style={{ marginBottom: "40px" }}>
           <h2
@@ -377,6 +381,7 @@ const AdminReports: React.FC = () => {
         </div>
       )}
 
+      {/* --- PHẦN 2: BỘ LỌC NGÀY CHO BÁO CÁO DOANH THU --- */}
       <div
         style={{
           background: "white",
@@ -436,6 +441,7 @@ const AdminReports: React.FC = () => {
           Tải lại
         </button>
       </div>
+
       {loading ? (
         <div
           style={{
@@ -450,6 +456,7 @@ const AdminReports: React.FC = () => {
       ) : (
         revenueReport && (
           <div style={{ marginBottom: "40px" }}>
+            {/* --- TỔNG QUAN DOANH THU --- */}
             <div
               style={{
                 display: "grid",
@@ -531,6 +538,7 @@ const AdminReports: React.FC = () => {
               </div>
             </div>
 
+            {/* --- PHƯƠNG THỨC THANH TOÁN (Đã cập nhật) --- */}
             <div
               style={{
                 background: "white",
@@ -540,7 +548,7 @@ const AdminReports: React.FC = () => {
               }}
             >
               <h3 style={{ marginBottom: "20px", color: "#1f2937" }}>
-                Phương thức thanh toán
+                Hiệu quả thanh toán
               </h3>
               <div
                 style={{
@@ -549,12 +557,14 @@ const AdminReports: React.FC = () => {
                   gap: "20px",
                 }}
               >
+                {/* 1. Tiền mặt */}
                 <div
                   style={{
                     padding: "20px",
                     background: "#dcfce7",
                     borderRadius: "12px",
                     boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+                    border: "1px solid #bbf7d0",
                   }}
                 >
                   <div
@@ -563,9 +573,12 @@ const AdminReports: React.FC = () => {
                       color: "#065f46",
                       fontWeight: 600,
                       marginBottom: "10px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
                     }}
                   >
-                    💵 Tiền mặt
+                    <i className="fas fa-money-bill-wave"></i> Tiền mặt
                   </div>
                   <div
                     style={{
@@ -590,53 +603,14 @@ const AdminReports: React.FC = () => {
                   </div>
                 </div>
 
-                <div
-                  style={{
-                    padding: "20px",
-                    background: "#dbeafe",
-                    borderRadius: "12px",
-                    boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "1rem",
-                      color: "#1e3a8a",
-                      fontWeight: 600,
-                      marginBottom: "10px",
-                    }}
-                  >
-                    💳 Thẻ tín dụng
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "#6b7280",
-                      marginBottom: "5px",
-                    }}
-                  >
-                    Giao dịch:{" "}
-                    <span style={{ fontWeight: 600, color: "#374151" }}>
-                      {revenueReport.creditCardTransactions}
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "1.3rem",
-                      fontWeight: "bold",
-                      color: "#3b82f6",
-                    }}
-                  >
-                    {formatCurrency(revenueReport.creditCardRevenue)}
-                  </div>
-                </div>
-
+                {/* 2. PayOS (Mapping từ QR Code backend) */}
                 <div
                   style={{
                     padding: "20px",
                     background: "#fef3c7",
                     borderRadius: "12px",
                     boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+                    border: "1px solid #fde68a",
                   }}
                 >
                   <div
@@ -645,9 +619,12 @@ const AdminReports: React.FC = () => {
                       color: "#92400e",
                       fontWeight: 600,
                       marginBottom: "10px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
                     }}
                   >
-                    📱 QR Code
+                    <i className="fas fa-qrcode"></i> PayOS / Chuyển khoản
                   </div>
                   <div
                     style={{
@@ -665,7 +642,7 @@ const AdminReports: React.FC = () => {
                     style={{
                       fontSize: "1.3rem",
                       fontWeight: "bold",
-                      color: "#f59e0b",
+                      color: "#d97706",
                     }}
                   >
                     {formatCurrency(revenueReport.qrCodeRevenue)}
@@ -677,6 +654,7 @@ const AdminReports: React.FC = () => {
         )
       )}
 
+      {/* --- PHẦN 3: MÓN ĂN BÁN CHẠY --- */}
       <div>
         <div
           style={{
