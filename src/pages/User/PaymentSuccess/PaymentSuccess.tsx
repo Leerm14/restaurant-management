@@ -7,7 +7,6 @@ const PaymentSuccess: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  
   const [isValidating, setIsValidating] = useState(true);
 
   const orderId = searchParams.get("orderId");
@@ -15,52 +14,26 @@ const PaymentSuccess: React.FC = () => {
   const transactionId = searchParams.get("transactionId");
 
   useEffect(() => {
-    const validateAndConfirmPayment = async () => {
-      
-      if (!orderId) {
-        navigate("/");
-        return;
-      }
+    const updatePaymentToFailed = async () => {
+      if (!orderId) return;
 
       try {
-        
         const paymentRes = await apiClient.get(
           `/api/payments/order/${orderId}`
         );
         const payment = paymentRes.data;
 
-        if (payment.status === "Successful") {
-          setIsValidating(false); 
-        } else if (payment.status === "Pending") {
-          
-          
-          try {
-            await apiClient.patch(`/api/payments/${payment.id}/confirm`);
-            
-            setIsValidating(false);
-            console.log("Đã xác nhận thanh toán thành công từ Client.");
-          } catch (err) {
-            console.error("Lỗi khi confirm payment:", err);
-            
-            navigate(
-              `/payment/payment-failed?orderId=${orderId}&reason=ConfirmFailed`
-            );
-          }
-        } else {
-          
-          
-          navigate(
-            `/payment/payment-failed?orderId=${orderId}&reason=Status_${payment.status}`
-          );
+        if (payment && payment.status === "Pending") {
+          await apiClient.patch(`/api/payments/${payment.id}/confirm`);
+          console.log("Đã cập nhật trạng thái thanh toán thành Confirmed");
         }
       } catch (error) {
-        console.error("Lỗi kết nối hoặc không tìm thấy đơn hàng:", error);
-        navigate("/menu");
+        console.error("Lỗi khi cập nhật trạng thái thanh toán:", error);
       }
     };
 
-    validateAndConfirmPayment();
-  }, [orderId, navigate]);
+    updatePaymentToFailed();
+  }, [orderId]);
 
   const formatCurrency = (amount: string | null) => {
     if (!amount) return "0đ";
@@ -70,8 +43,6 @@ const PaymentSuccess: React.FC = () => {
     }).format(Number(amount));
   };
 
-  
-  
   if (isValidating) {
     return (
       <div className="payment-result-page success">
@@ -103,7 +74,6 @@ const PaymentSuccess: React.FC = () => {
     );
   }
 
-  
   return (
     <div className="payment-result-page success">
       <div className="payment-result-container">
