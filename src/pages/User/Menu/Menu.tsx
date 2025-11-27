@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import "./Menu.css";
-import MenuCard from "../../../components/MenuCard.tsx";
-import MenuCardHighlight from "../../../components/MenuCardHighlight.tsx";
-import Button from "../../../components/Button.tsx";
+import MenuCard from "../../../components/MenuCard";
+import MenuCardHighlight from "../../../components/MenuCardHighlight";
+import Button from "../../../components/Button";
 import apiClient from "../../../services/api";
 import { useCart } from "../../../contexts/CartContext";
 
@@ -20,27 +20,37 @@ interface MenuItem {
 interface Category {
   id: string;
   name: string;
+  color: string;
 }
 
 const Menu: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [categories, setCategories] = useState<Category[]>([
-    { id: "all", name: "Tất cả" },
-  ]);
+  const [allMenuItems, setAllMenuItems] = useState<MenuItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const { addToCart } = useCart();
 
-  
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 8;
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const response = await apiClient.get("/api/categories");
-        const cats: Category[] = response.data.map((cat: any) => ({
-          id: cat.id.toString(),
-          name: cat.name,
-        }));
-        setCategories([{ id: "all", name: "Tất cả" }, ...cats]);
+        const cats: Category[] = response.data.map((cat: any) => {
+          const randomColor =
+            "#" +
+            Math.floor(Math.random() * 0x1000000)
+              .toString(16)
+              .padStart(6, "0");
+
+          return {
+            id: cat.id.toString(),
+            name: cat.name,
+            color: randomColor,
+          };
+        });
+        setCategories(cats);
       } catch (error) {
         console.error("Error fetching categories:", error);
       }
@@ -48,77 +58,77 @@ const Menu: React.FC = () => {
     fetchCategories();
   }, []);
 
-  
   useEffect(() => {
     const fetchMenuItems = async () => {
       setLoading(true);
+      setCurrentPage(0);
       try {
         let response;
 
         if (selectedCategory !== "all") {
-          
-          
           response = await apiClient.get(
             `/api/menu/category/${selectedCategory}`,
             {
               params: {
                 page: 0,
-                size: 100, 
+                size: 1000,
               },
             }
           );
         } else {
-          
           response = await apiClient.get("/api/menu", {
             params: {
-              available: true, 
+              available: true,
               page: 0,
-              size: 100,
+              size: 1000,
             },
           });
         }
 
-        const items: MenuItem[] = response.data.map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          category: item.category?.name || "Khác",
-          status: item.status?.toLowerCase() as "available" | "unavailable",
-          image:
-            item.imageUrl ||
-            "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop",
-          description: item.description || "",
-        }));
-        setMenuItems(items);
+        const rawItems = Array.isArray(response.data)
+          ? response.data
+          : response.data.content || [];
+
+        const items: MenuItem[] = rawItems
+          .map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            category: item.category?.name || "Khác",
+            status: item.status?.toLowerCase() as "available" | "unavailable",
+            image:
+              item.imageUrl ||
+              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop",
+            description: item.description || "",
+          }))
+          .filter((item: MenuItem) => item.status === "available");
+
+        setAllMenuItems(items);
       } catch (error) {
         console.error("Error fetching menu items:", error);
+        setAllMenuItems([]);
       } finally {
         setLoading(false);
       }
     };
     fetchMenuItems();
-  }, [selectedCategory]); 
+  }, [selectedCategory]);
 
-  
-  const getFilteredMenu = (): MenuItem[] => {
-    
-    return menuItems.filter((item) => item.status === "available");
-  };
+  const pageCount = Math.ceil(allMenuItems.length / itemsPerPage);
 
-  
-  const filteredMenu = getFilteredMenu();
-  const featuredMenu: MenuItem[] = filteredMenu.slice(0, 3);
+  const paginatedItems = allMenuItems.slice(
+    currentPage * itemsPerPage,
+    (currentPage + 1) * itemsPerPage
+  );
 
-  
-  const regularMenu: MenuItem[] = filteredMenu.slice(3);
+  const featuredMenu = allMenuItems.slice(0, 3);
 
-  
   const handleAddToCart = (item: {
     title: string;
     price: string;
     image: string;
   }) => {
-    const menuItem = menuItems.find((m) => m.name === item.title);
+    const menuItem = allMenuItems.find((m) => m.name === item.title);
     if (menuItem) {
       addToCart({
         id: menuItem.id,
@@ -130,7 +140,6 @@ const Menu: React.FC = () => {
     }
   };
 
-  
   const scrollToFullMenu = () => {
     const fullMenuSection = document.getElementById("full-menu-section");
     if (fullMenuSection) {
@@ -143,7 +152,6 @@ const Menu: React.FC = () => {
 
   return (
     <div className="menu-page">
-      
       <section className="menu-hero">
         <div className="menu-hero-overlay">
           <div className="menu-container">
@@ -158,9 +166,8 @@ const Menu: React.FC = () => {
               </Button>
             </div>
 
-            
             <div className="hero-dishes">
-              {menuItems.slice(0, 6).map((dish, index) => (
+              {allMenuItems.slice(0, 6).map((dish, index) => (
                 <div
                   key={dish.id}
                   className={`hero-dish hero-dish-${index + 1}`}
@@ -173,56 +180,54 @@ const Menu: React.FC = () => {
         </div>
       </section>
 
-      
-      <section className="featured-menu-section">
-        <div className="menu-container">
-          <h2 className="section-title">Món Nổi Bật</h2>
-          <div className="menu-grid-highlight">
-            {loading ? (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "40px",
-                  gridColumn: "1 / -1",
-                }}
-              >
-                Đang tải...
-              </div>
-            ) : featuredMenu.length > 0 ? (
-              featuredMenu.map((menuItem) => (
-                <MenuCardHighlight
-                  key={menuItem.id}
-                  image={menuItem.image}
-                  title={menuItem.name}
-                  description={menuItem.description || ""}
-                  price={menuItem.price}
-                  category={menuItem.category}
-                  alt={menuItem.name}
-                  onAddToCart={handleAddToCart}
-                />
-              ))
-            ) : (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "40px",
-                  gridColumn: "1 / -1",
-                }}
-              >
-                Không có món nổi bật
-              </div>
-            )}
+      {featuredMenu.length > 0 && (
+        <section className="featured-menu-section">
+          <div className="menu-container">
+            <h2 className="section-title">Món Nổi Bật</h2>
+            <div className="menu-grid-highlight">
+              {loading ? (
+                <div style={{ textAlign: "center", gridColumn: "1 / -1" }}>
+                  Đang tải...
+                </div>
+              ) : (
+                featuredMenu.map((menuItem) => (
+                  <MenuCardHighlight
+                    key={menuItem.id}
+                    image={menuItem.image}
+                    title={menuItem.name}
+                    description={menuItem.description || ""}
+                    price={menuItem.price}
+                    category={menuItem.category}
+                    alt={menuItem.name}
+                    onAddToCart={handleAddToCart}
+                  />
+                ))
+              )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* Full Menu Section */}
       <section id="full-menu-section" className="full-menu-section">
         <div className="menu-container">
           <h2 className="section-title">Toàn Bộ Menu</h2>
 
-          
           <div className="category-filter">
+            <button
+              className={`filter-btn ${
+                selectedCategory === "all" ? "active" : ""
+              }`}
+              onClick={() => setSelectedCategory("all")}
+              style={{
+                backgroundColor:
+                  selectedCategory === "all" ? "#4CAF50" : "transparent",
+                borderColor: "#4CAF50",
+                color: selectedCategory === "all" ? "white" : "#4CAF50",
+              }}
+            >
+              Tất cả
+            </button>
+
             {categories.map((category) => (
               <button
                 key={category.id}
@@ -230,13 +235,21 @@ const Menu: React.FC = () => {
                   selectedCategory === category.id ? "active" : ""
                 }`}
                 onClick={() => setSelectedCategory(category.id)}
+                style={{
+                  backgroundColor:
+                    selectedCategory === category.id
+                      ? category.color
+                      : "transparent",
+                  borderColor: category.color,
+                  color:
+                    selectedCategory === category.id ? "white" : category.color,
+                }}
               >
                 {category.name}
               </button>
             ))}
           </div>
 
-          
           <div className="menu-grid">
             {loading ? (
               <div
@@ -248,8 +261,8 @@ const Menu: React.FC = () => {
               >
                 Đang tải...
               </div>
-            ) : regularMenu.length > 0 ? (
-              regularMenu.map((menuItem) => (
+            ) : paginatedItems.length > 0 ? (
+              paginatedItems.map((menuItem) => (
                 <MenuCard
                   key={menuItem.id}
                   image={menuItem.image}
@@ -273,10 +286,45 @@ const Menu: React.FC = () => {
               </div>
             )}
           </div>
+
+          {pageCount > 1 && (
+            <div className="pagination">
+              <button
+                className="pagination-btn"
+                onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+                disabled={currentPage === 0}
+              >
+                <i className="fas fa-chevron-left"></i> Trước
+              </button>
+
+              <div className="page-numbers">
+                {Array.from({ length: pageCount }, (_, i) => (
+                  <button
+                    key={i}
+                    className={`page-number ${
+                      currentPage === i ? "active" : ""
+                    }`}
+                    onClick={() => setCurrentPage(i)}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                className="pagination-btn"
+                onClick={() =>
+                  setCurrentPage(Math.min(pageCount - 1, currentPage + 1))
+                }
+                disabled={currentPage === pageCount - 1}
+              >
+                Sau <i className="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
-      
       <section className="menu-cta-section">
         <div className="menu-container">
           <div className="cta-content">
