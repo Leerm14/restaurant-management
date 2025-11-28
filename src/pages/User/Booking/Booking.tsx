@@ -25,34 +25,70 @@ const Booking: React.FC = () => {
   const navigate = useNavigate();
   const fromCart = location.state?.fromCart || false;
 
-  
   useEffect(() => {
-    const fetchTables = async () => {
+    const fetchTableAvailability = async () => {
+      if (!selectedDate || !selectedTime) {
+        loadDefaultTables();
+        return;
+      }
+
+      setLoading(true);
       try {
-        const response = await apiClient.get("/api/tables", {
-          params: { page: 0, size: 100 },
+        const dateTimeStr = `${selectedDate}T${selectedTime}:00`;
+        const response = await apiClient.get("/api/tables/availability", {
+          params: { time: dateTimeStr },
         });
-        console.log(response.data);
-        const tablesData = Array.isArray(response.data)
-          ? response.data
-          : response.data.content || [];
+
+        const tablesData = Array.isArray(response.data) ? response.data : [];
+
         const formattedTables: Table[] = tablesData.map((table: any) => ({
           id: table.id,
           tableNumber: table.tableNumber,
           capacity: table.capacity || 4,
           status: table.status,
         }));
-        console.log(formattedTables);
+
         setTables(formattedTables);
+        if (selectedTable) {
+          const currentTable = formattedTables.find(
+            (t) => t.id === selectedTable
+          );
+          if (currentTable && currentTable.status !== "Available") {
+            setSelectedTable(null);
+          }
+        }
       } catch (error) {
-        console.error("Error fetching tables:", error);
-        setError("Kh\u00f4ng th\u1ec3 t\u1ea3i danh s\u00e1ch b\u00e0n");
+        console.error("Lỗi khi kiểm tra bàn:", error);
+        setError("Không thể tải trạng thái bàn cho giờ đã chọn");
+      } finally {
+        setLoading(false);
       }
     };
-    fetchTables();
-  }, []);
 
-  
+    const loadDefaultTables = async () => {
+      try {
+        const response = await apiClient.get("/api/tables", {
+          params: { page: 0, size: 100 },
+        });
+        const tablesData = Array.isArray(response.data)
+          ? response.data
+          : response.data.content || [];
+
+        const formattedTables: Table[] = tablesData.map((table: any) => ({
+          id: table.id,
+          tableNumber: table.tableNumber,
+          capacity: table.capacity || 4,
+          status: table.status,
+        }));
+        setTables(formattedTables);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    fetchTableAvailability();
+  }, [selectedDate, selectedTime]);
+
   const timeSlots: string[] = [
     "17:00",
     "17:30",
@@ -68,14 +104,12 @@ const Booking: React.FC = () => {
     "22:30",
   ];
 
-  
   const handleTableSelect = (table: Table) => {
     if (table.status === "Available") {
       setSelectedTable(table.id);
     }
   };
 
-  
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Available":
@@ -91,7 +125,6 @@ const Booking: React.FC = () => {
     }
   };
 
-  
   const getStatusText = (status: string) => {
     switch (status) {
       case "Available":
@@ -107,12 +140,10 @@ const Booking: React.FC = () => {
     }
   };
 
-  
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
-    
     if (!selectedDate) {
       setError("Vui lòng chọn ngày đặt bàn");
       return;
@@ -141,10 +172,8 @@ const Booking: React.FC = () => {
     setLoading(true);
 
     try {
-      
       const bookingDateTime = `${selectedDate}T${selectedTime}:00`;
 
-      
       const bookingDate = new Date(bookingDateTime);
       const now = new Date();
       if (bookingDate <= now) {
@@ -164,32 +193,13 @@ const Booking: React.FC = () => {
 
       alert("Đặt bàn thành công! Chúng tôi sẽ liên hệ với bạn sớm.");
 
-      
-      try {
-        const response = await apiClient.get("/api/tables", {
-          params: { page: 0, size: 100 },
-        });
-        const tablesData = Array.isArray(response.data)
-          ? response.data
-          : response.data.content || [];
-        const formattedTables: Table[] = tablesData.map((table: any) => ({
-          id: table.id,
-          tableNumber: table.tableNumber,
-          capacity: table.capacity || 4,
-          status: table.status,
-        }));
-        setTables(formattedTables);
-      } catch (refreshError) {
-        console.error("Error refreshing tables:", refreshError);
-      }
-
-      
+      // Refresh lại danh sách bàn (thực ra effect sẽ tự chạy nhưng gọi lại cho chắc chắn)
+      // Reset form
       setSelectedDate("");
       setSelectedTime("");
       setSelectedTable(null);
       setNumGuests(2);
 
-      
       if (fromCart) {
         navigate("/cart");
       }
@@ -198,14 +208,16 @@ const Booking: React.FC = () => {
       const errorMessage =
         err.response?.data?.message || "Không thể tạo đặt bàn";
 
-      
       if (errorMessage.includes("not available")) {
         setError("Bàn này đã được đặt. Vui lòng chọn bàn khác.");
       } else if (errorMessage.includes("capacity")) {
         setError(
           "Số khách vượt quá sức chứa của bàn. Vui lòng chọn bàn lớn hơn."
         );
-      } else if (errorMessage.includes("already booked")) {
+      } else if (
+        errorMessage.includes("already booked") ||
+        errorMessage.includes("conflict")
+      ) {
         setError(
           "Thời gian này đã có người đặt. Vui lòng chọn thời gian khác."
         );
@@ -248,7 +260,6 @@ const Booking: React.FC = () => {
         )}
 
         <form className="booking-form" onSubmit={handleSubmit}>
-          
           <div className="booking-form-section">
             <h3 className="booking-section-title">
               Chọn ngày <span style={{ color: "#ef4444" }}>*</span>
@@ -264,7 +275,6 @@ const Booking: React.FC = () => {
             </div>
           </div>
 
-          
           <div className="booking-form-section">
             <h3 className="booking-section-title">
               Chọn giờ <span style={{ color: "#ef4444" }}>*</span>
@@ -285,7 +295,6 @@ const Booking: React.FC = () => {
             </div>
           </div>
 
-          
           <div className="booking-form-section">
             <h3 className="booking-section-title">
               Chọn bàn <span style={{ color: "#ef4444" }}>*</span>
@@ -299,7 +308,9 @@ const Booking: React.FC = () => {
                     color: "#7f8c8d",
                   }}
                 >
-                  Không có bàn nào. Vui lòng liên hệ nhà hàng.
+                  {selectedDate && selectedTime
+                    ? "Không tìm thấy bàn trống."
+                    : "Vui lòng chọn ngày và giờ để xem danh sách bàn."}
                 </p>
               ) : (
                 tables.map((table) => (
@@ -337,7 +348,6 @@ const Booking: React.FC = () => {
             </div>
           </div>
 
-          
           <div className="booking-form-section">
             <h3 className="booking-section-title">Thông tin đặt bàn</h3>
             <div className="booking-customer-info">
@@ -357,7 +367,6 @@ const Booking: React.FC = () => {
             </div>
           </div>
 
-          
           <div className="booking-form-submit">
             <Button variant="primary" disabled={loading}>
               {loading ? "Đang xử lý..." : "✓ Xác nhận đặt bàn"}

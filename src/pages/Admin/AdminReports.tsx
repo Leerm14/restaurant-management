@@ -9,10 +9,8 @@ interface RevenueReport {
   averageTransactionValue: number;
   cashRevenue: number;
   cashTransactions: number;
-  // Backend mapping: PayOS -> qrCodeRevenue
   qrCodeRevenue: number;
   qrCodeTransactions: number;
-  // Các trường này hiện trả về 0 từ backend
   creditCardRevenue: number;
   creditCardTransactions: number;
 }
@@ -42,12 +40,25 @@ interface BestSellingItem {
   totalRevenue: number;
 }
 
+interface OrderReportItem {
+  id: number;
+  userFullName: string;
+  tableName: string;
+  totalAmount: number;
+  status: string;
+  orderType: string;
+  createdAt: string;
+  paymentStatus?: string;
+}
+
 const AdminReports: React.FC = () => {
   const [revenueReport, setRevenueReport] = useState<RevenueReport | null>(
     null
   );
   const [monthlyStats, setMonthlyStats] = useState<MonthlyStats | null>(null);
   const [bestSelling, setBestSelling] = useState<BestSellingItem[]>([]);
+  const [orders, setOrders] = useState<OrderReportItem[]>([]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -73,6 +84,10 @@ const AdminReports: React.FC = () => {
     loadBestSelling();
   }, [limit]);
 
+  useEffect(() => {
+    loadOrders();
+  }, []);
+
   const loadRevenueReport = async () => {
     setLoading(true);
     setError("");
@@ -80,7 +95,6 @@ const AdminReports: React.FC = () => {
       const response = await apiClient.get("/api/payments/revenue-report", {
         params: { fromDate, toDate },
       });
-      console.log("Revenue report response:", response.data);
       setRevenueReport(response.data);
     } catch (err: any) {
       console.error("Error loading revenue report:", err);
@@ -99,7 +113,6 @@ const AdminReports: React.FC = () => {
       const response = await apiClient.get("/api/orders/stats/monthly", {
         params: { year: selectedYear, month: selectedMonth },
       });
-      console.log("Monthly stats response:", response.data);
       setMonthlyStats(response.data);
     } catch (err: any) {
       console.error("Error loading monthly stats:", err);
@@ -125,6 +138,25 @@ const AdminReports: React.FC = () => {
     }
   };
 
+  const loadOrders = async () => {
+    setLoading(true);
+    try {
+      const response = await apiClient.get("/api/orders");
+      const sortedOrders = (response.data as OrderReportItem[]).sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setOrders(sortedOrders);
+    } catch (err: any) {
+      console.error("Error loading orders:", err);
+      setError(
+        err.response?.data?.message || "Không thể tải danh sách đơn hàng"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
@@ -132,22 +164,27 @@ const AdminReports: React.FC = () => {
     }).format(amount);
   };
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString("vi-VN");
+  };
+
   const getMonthName = (month: number) => {
-    const months = [
-      "Tháng 1",
-      "Tháng 2",
-      "Tháng 3",
-      "Tháng 4",
-      "Tháng 5",
-      "Tháng 6",
-      "Tháng 7",
-      "Tháng 8",
-      "Tháng 9",
-      "Tháng 10",
-      "Tháng 11",
-      "Tháng 12",
-    ];
-    return months[month - 1];
+    return `Tháng ${month}`;
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Completed":
+        return "#22c55e";
+      case "Cancelled":
+        return "#ef4444";
+      case "Pending":
+        return "#f59e0b";
+      case "Confirmed":
+        return "#3b82f6";
+      default:
+        return "#6b7280";
+    }
   };
 
   return (
@@ -174,7 +211,6 @@ const AdminReports: React.FC = () => {
         </div>
       )}
 
-      {/* --- PHẦN 1: BỘ LỌC THÁNG/NĂM CHO THỐNG KÊ ĐƠN HÀNG --- */}
       <div
         style={{
           background: "white",
@@ -196,7 +232,6 @@ const AdminReports: React.FC = () => {
               padding: "10px 16px",
               border: "2px solid #e5e7eb",
               borderRadius: "8px",
-              fontSize: "1rem",
             }}
           >
             {[2023, 2024, 2025, 2026].map((year) => (
@@ -215,7 +250,6 @@ const AdminReports: React.FC = () => {
               padding: "10px 16px",
               border: "2px solid #e5e7eb",
               borderRadius: "8px",
-              fontSize: "1rem",
             }}
           >
             {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
@@ -241,7 +275,6 @@ const AdminReports: React.FC = () => {
         </button>
       </div>
 
-      {/* --- HIỂN THỊ THỐNG KÊ ĐƠN HÀNG --- */}
       {monthlyStats && (
         <div style={{ marginBottom: "40px" }}>
           <h2
@@ -251,9 +284,8 @@ const AdminReports: React.FC = () => {
               marginBottom: "20px",
             }}
           >
-            Đơn hàng {getMonthName(monthlyStats.month)} năm {monthlyStats.year}
+            Tổng quan {getMonthName(monthlyStats.month)}/{monthlyStats.year}
           </h2>
-
           <div
             style={{
               display: "grid",
@@ -284,104 +316,39 @@ const AdminReports: React.FC = () => {
                 {monthlyStats.totalOrders}
               </div>
             </div>
-
-            {monthlyStats.ordersByStatus && (
-              <>
-                <div
-                  style={{
-                    background: "#fef3c7",
-                    padding: "20px",
-                    borderRadius: "12px",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                  }}
-                >
-                  <div style={{ fontSize: "0.9rem", color: "#92400e" }}>
-                    Chờ xác nhận
-                  </div>
+            {monthlyStats.ordersByStatus &&
+              Object.entries(monthlyStats.ordersByStatus).map(
+                ([status, count]) => (
                   <div
+                    key={status}
                     style={{
-                      fontSize: "2rem",
-                      fontWeight: "bold",
-                      color: "#f59e0b",
-                      marginTop: "5px",
+                      background: "white",
+                      padding: "20px",
+                      borderRadius: "12px",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                      borderTop: `4px solid ${getStatusColor(status)}`,
                     }}
                   >
-                    {monthlyStats.ordersByStatus.Pending || 0}
+                    <div style={{ fontSize: "0.9rem", color: "#6b7280" }}>
+                      {status}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "2rem",
+                        fontWeight: "bold",
+                        color: "#1f2937",
+                        marginTop: "5px",
+                      }}
+                    >
+                      {count}
+                    </div>
                   </div>
-                </div>
-                <div
-                  style={{
-                    background: "#dbeafe",
-                    padding: "20px",
-                    borderRadius: "12px",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                  }}
-                >
-                  <div style={{ fontSize: "0.9rem", color: "#1e3a8a" }}>
-                    Đã xác nhận
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "2rem",
-                      fontWeight: "bold",
-                      color: "#3b82f6",
-                      marginTop: "5px",
-                    }}
-                  >
-                    {monthlyStats.ordersByStatus.Confirmed || 0}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    background: "#d1fae5",
-                    padding: "20px",
-                    borderRadius: "12px",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                  }}
-                >
-                  <div style={{ fontSize: "0.9rem", color: "#065f46" }}>
-                    Hoàn thành
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "2rem",
-                      fontWeight: "bold",
-                      color: "#22c55e",
-                      marginTop: "5px",
-                    }}
-                  >
-                    {monthlyStats.ordersByStatus.Completed || 0}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    background: "#fee2e2",
-                    padding: "20px",
-                    borderRadius: "12px",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                  }}
-                >
-                  <div style={{ fontSize: "0.9rem", color: "#991b1b" }}>
-                    Đã hủy
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "2rem",
-                      fontWeight: "bold",
-                      color: "#ef4444",
-                      marginTop: "5px",
-                    }}
-                  >
-                    {monthlyStats.ordersByStatus.Cancelled || 0}
-                  </div>
-                </div>
-              </>
-            )}
+                )
+              )}
           </div>
         </div>
       )}
 
-      {/* --- PHẦN 2: BỘ LỌC NGÀY CHO BÁO CÁO DOANH THU --- */}
       <div
         style={{
           background: "white",
@@ -392,153 +359,63 @@ const AdminReports: React.FC = () => {
           display: "flex",
           gap: "20px",
           alignItems: "center",
+          flexWrap: "wrap",
         }}
       >
+        <h3 style={{ width: "100%", margin: "0 0 10px 0" }}>
+          Lọc doanh thu theo ngày
+        </h3>
         <div>
-          <label style={{ fontWeight: 600, marginRight: "10px" }}>
-            Từ ngày:
-          </label>
+          <label style={{ fontWeight: 600, marginRight: "10px" }}>Từ:</label>
           <input
             type="date"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
             style={{
-              padding: "10px 16px",
-              border: "2px solid #e5e7eb",
-              borderRadius: "8px",
-              fontSize: "1rem",
+              padding: "8px",
+              border: "1px solid #ddd",
+              borderRadius: "6px",
             }}
           />
         </div>
         <div>
-          <label style={{ fontWeight: 600, marginRight: "10px" }}>
-            Đến ngày:
-          </label>
+          <label style={{ fontWeight: 600, marginRight: "10px" }}>Đến:</label>
           <input
             type="date"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
             style={{
-              padding: "10px 16px",
-              border: "2px solid #e5e7eb",
-              borderRadius: "8px",
-              fontSize: "1rem",
+              padding: "8px",
+              border: "1px solid #ddd",
+              borderRadius: "6px",
             }}
           />
         </div>
         <button
           onClick={loadRevenueReport}
           style={{
-            padding: "10px 20px",
-            background: "#3b82f6",
+            padding: "8px 16px",
+            background: "#10b981",
             color: "white",
             border: "none",
-            borderRadius: "8px",
+            borderRadius: "6px",
             fontWeight: 600,
             cursor: "pointer",
           }}
         >
-          Tải lại
+          Xem báo cáo
         </button>
       </div>
 
-      {loading ? (
-        <div
-          style={{
-            textAlign: "center",
-            padding: "40px",
-            fontSize: "1.2rem",
-            color: "#6b7280",
-          }}
-        >
-          Đang tải...
-        </div>
-      ) : (
-        revenueReport && (
-          <div style={{ marginBottom: "40px" }}>
-            {/* --- TỔNG QUAN DOANH THU --- */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-                gap: "20px",
-                marginBottom: "30px",
-              }}
-            >
-              <div
-                style={{
-                  background:
-                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  color: "white",
-                  padding: "24px",
-                  borderRadius: "12px",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                }}
-              >
-                <div style={{ fontSize: "0.9rem", opacity: 0.9 }}>
-                  Tổng giao dịch
-                </div>
-                <div
-                  style={{
-                    fontSize: "2.5rem",
-                    fontWeight: "bold",
-                    marginTop: "10px",
-                  }}
-                >
-                  {revenueReport.totalTransactions}
-                </div>
-              </div>
-
-              <div
-                style={{
-                  background:
-                    "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-                  color: "white",
-                  padding: "24px",
-                  borderRadius: "12px",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                }}
-              >
-                <div style={{ fontSize: "0.9rem", opacity: 0.9 }}>
-                  Tổng doanh thu
-                </div>
-                <div
-                  style={{
-                    fontSize: "2rem",
-                    fontWeight: "bold",
-                    marginTop: "10px",
-                  }}
-                >
-                  {formatCurrency(revenueReport.totalRevenue)}
-                </div>
-              </div>
-
-              <div
-                style={{
-                  background:
-                    "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-                  color: "white",
-                  padding: "24px",
-                  borderRadius: "12px",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                }}
-              >
-                <div style={{ fontSize: "0.9rem", opacity: 0.9 }}>
-                  Trung bình/giao dịch
-                </div>
-                <div
-                  style={{
-                    fontSize: "2rem",
-                    fontWeight: "bold",
-                    marginTop: "10px",
-                  }}
-                >
-                  {formatCurrency(revenueReport.averageTransactionValue)}
-                </div>
-              </div>
-            </div>
-
-            {/* --- PHƯƠNG THỨC THANH TOÁN (Đã cập nhật) --- */}
+      {revenueReport && (
+        <div style={{ marginBottom: "40px" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+              gap: "20px",
+            }}
+          >
             <div
               style={{
                 background: "white",
@@ -547,115 +424,91 @@ const AdminReports: React.FC = () => {
                 boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
               }}
             >
-              <h3 style={{ marginBottom: "20px", color: "#1f2937" }}>
-                Hiệu quả thanh toán
-              </h3>
+              <div style={{ color: "#6b7280", fontSize: "0.9rem" }}>
+                Tổng doanh thu
+              </div>
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                  gap: "20px",
+                  fontSize: "1.8rem",
+                  fontWeight: "bold",
+                  color: "#10b981",
+                  marginTop: "5px",
                 }}
               >
-                {/* 1. Tiền mặt */}
-                <div
-                  style={{
-                    padding: "20px",
-                    background: "#dcfce7",
-                    borderRadius: "12px",
-                    boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
-                    border: "1px solid #bbf7d0",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "1rem",
-                      color: "#065f46",
-                      fontWeight: 600,
-                      marginBottom: "10px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <i className="fas fa-money-bill-wave"></i> Tiền mặt
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "#6b7280",
-                      marginBottom: "5px",
-                    }}
-                  >
-                    Giao dịch:{" "}
-                    <span style={{ fontWeight: 600, color: "#374151" }}>
-                      {revenueReport.cashTransactions}
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "1.3rem",
-                      fontWeight: "bold",
-                      color: "#22c55e",
-                    }}
-                  >
-                    {formatCurrency(revenueReport.cashRevenue)}
-                  </div>
-                </div>
-
-                {/* 2. PayOS (Mapping từ QR Code backend) */}
-                <div
-                  style={{
-                    padding: "20px",
-                    background: "#fef3c7",
-                    borderRadius: "12px",
-                    boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
-                    border: "1px solid #fde68a",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "1rem",
-                      color: "#92400e",
-                      fontWeight: 600,
-                      marginBottom: "10px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <i className="fas fa-qrcode"></i> PayOS / Chuyển khoản
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "#6b7280",
-                      marginBottom: "5px",
-                    }}
-                  >
-                    Giao dịch:{" "}
-                    <span style={{ fontWeight: 600, color: "#374151" }}>
-                      {revenueReport.qrCodeTransactions}
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "1.3rem",
-                      fontWeight: "bold",
-                      color: "#d97706",
-                    }}
-                  >
-                    {formatCurrency(revenueReport.qrCodeRevenue)}
-                  </div>
-                </div>
+                {formatCurrency(revenueReport.totalRevenue)}
+              </div>
+            </div>
+            <div
+              style={{
+                background: "white",
+                padding: "24px",
+                borderRadius: "12px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              }}
+            >
+              <div style={{ color: "#6b7280", fontSize: "0.9rem" }}>
+                Số giao dịch
+              </div>
+              <div
+                style={{
+                  fontSize: "1.8rem",
+                  fontWeight: "bold",
+                  color: "#3b82f6",
+                  marginTop: "5px",
+                }}
+              >
+                {revenueReport.totalTransactions}
+              </div>
+            </div>
+            <div
+              style={{
+                background: "white",
+                padding: "24px",
+                borderRadius: "12px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              }}
+            >
+              <div style={{ color: "#6b7280", fontSize: "0.9rem" }}>
+                Tiền mặt
+              </div>
+              <div
+                style={{
+                  fontSize: "1.5rem",
+                  fontWeight: "bold",
+                  color: "#f59e0b",
+                  marginTop: "5px",
+                }}
+              >
+                {formatCurrency(revenueReport.cashRevenue)}
+              </div>
+            </div>
+            <div
+              style={{
+                background: "white",
+                padding: "24px",
+                borderRadius: "12px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              }}
+            >
+              <div style={{ color: "#6b7280", fontSize: "0.9rem" }}>
+                Chuyển khoản (PayOS)
+              </div>
+              <div
+                style={{
+                  fontSize: "1.5rem",
+                  fontWeight: "bold",
+                  color: "#8b5cf6",
+                  marginTop: "5px",
+                }}
+              >
+                {formatCurrency(revenueReport.qrCodeRevenue)}
               </div>
             </div>
           </div>
-        )
+        </div>
       )}
 
-      {/* --- PHẦN 3: MÓN ĂN BÁN CHẠY --- */}
-      <div>
+      <div style={{ marginBottom: "40px" }}>
         <div
           style={{
             display: "flex",
@@ -665,29 +518,22 @@ const AdminReports: React.FC = () => {
           }}
         >
           <h2 style={{ fontSize: "1.5rem", color: "#1f2937" }}>
-            Món ăn bán chạy nhất
+            Top món bán chạy
           </h2>
-          <div>
-            <label style={{ fontWeight: 600, marginRight: "10px" }}>
-              Hiển thị:
-            </label>
-            <select
-              value={limit}
-              onChange={(e) => setLimit(Number(e.target.value))}
-              style={{
-                padding: "8px 12px",
-                border: "2px solid #e5e7eb",
-                borderRadius: "8px",
-                fontSize: "1rem",
-              }}
-            >
-              <option value={5}>Top 5</option>
-              <option value={10}>Top 10</option>
-              <option value={20}>Top 20</option>
-            </select>
-          </div>
+          <select
+            value={limit}
+            onChange={(e) => setLimit(Number(e.target.value))}
+            style={{
+              padding: "6px 12px",
+              borderRadius: "6px",
+              border: "1px solid #ddd",
+            }}
+          >
+            <option value={5}>Top 5</option>
+            <option value={10}>Top 10</option>
+            <option value={20}>Top 20</option>
+          </select>
         </div>
-
         <div
           style={{
             background: "white",
@@ -697,13 +543,14 @@ const AdminReports: React.FC = () => {
           }}
         >
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead style={{ background: "#f3f4f6" }}>
+            <thead style={{ background: "#f9fafb" }}>
               <tr>
                 <th
                   style={{
                     padding: "16px",
                     textAlign: "left",
-                    fontWeight: 600,
+                    fontSize: "0.9rem",
+                    color: "#6b7280",
                   }}
                 >
                   Hạng
@@ -712,7 +559,8 @@ const AdminReports: React.FC = () => {
                   style={{
                     padding: "16px",
                     textAlign: "left",
-                    fontWeight: 600,
+                    fontSize: "0.9rem",
+                    color: "#6b7280",
                   }}
                 >
                   Tên món
@@ -720,17 +568,9 @@ const AdminReports: React.FC = () => {
                 <th
                   style={{
                     padding: "16px",
-                    textAlign: "left",
-                    fontWeight: 600,
-                  }}
-                >
-                  Danh mục
-                </th>
-                <th
-                  style={{
-                    padding: "16px",
                     textAlign: "right",
-                    fontWeight: 600,
+                    fontSize: "0.9rem",
+                    color: "#6b7280",
                   }}
                 >
                   Giá
@@ -739,7 +579,8 @@ const AdminReports: React.FC = () => {
                   style={{
                     padding: "16px",
                     textAlign: "right",
-                    fontWeight: 600,
+                    fontSize: "0.9rem",
+                    color: "#6b7280",
                   }}
                 >
                   Đã bán
@@ -748,7 +589,8 @@ const AdminReports: React.FC = () => {
                   style={{
                     padding: "16px",
                     textAlign: "right",
-                    fontWeight: 600,
+                    fontSize: "0.9rem",
+                    color: "#6b7280",
                   }}
                 >
                   Doanh thu
@@ -764,21 +606,19 @@ const AdminReports: React.FC = () => {
                   <td style={{ padding: "16px" }}>
                     <span
                       style={{
-                        background: index < 3 ? "#fbbf24" : "#e5e7eb",
+                        background: index < 3 ? "#fbbf24" : "#f3f4f6",
                         color: index < 3 ? "white" : "#374151",
-                        padding: "4px 12px",
+                        padding: "4px 10px",
                         borderRadius: "20px",
                         fontWeight: "bold",
+                        fontSize: "0.8rem",
                       }}
                     >
                       #{index + 1}
                     </span>
                   </td>
-                  <td style={{ padding: "16px", fontWeight: 600 }}>
+                  <td style={{ padding: "16px", fontWeight: 500 }}>
                     {item.menuItemName}
-                  </td>
-                  <td style={{ padding: "16px", color: "#6b7280" }}>
-                    {item.categoryName}
                   </td>
                   <td style={{ padding: "16px", textAlign: "right" }}>
                     {formatCurrency(item.price)}
@@ -788,7 +628,6 @@ const AdminReports: React.FC = () => {
                       padding: "16px",
                       textAlign: "right",
                       fontWeight: 600,
-                      color: "#3b82f6",
                     }}
                   >
                     {item.totalQuantitySold}
@@ -797,14 +636,234 @@ const AdminReports: React.FC = () => {
                     style={{
                       padding: "16px",
                       textAlign: "right",
+                      color: "#10b981",
                       fontWeight: 600,
-                      color: "#22c55e",
                     }}
                   >
                     {formatCurrency(item.totalRevenue)}
                   </td>
                 </tr>
               ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "20px",
+          }}
+        >
+          <h2 style={{ fontSize: "1.5rem", color: "#1f2937" }}>
+            Danh sách toàn bộ đơn hàng
+          </h2>
+          <button
+            onClick={loadOrders}
+            style={{
+              padding: "8px 16px",
+              background: "white",
+              border: "1px solid #ddd",
+              borderRadius: "6px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+            }}
+          >
+            <i className="fas fa-sync-alt"></i> Làm mới
+          </button>
+        </div>
+
+        <div
+          style={{
+            background: "white",
+            borderRadius: "12px",
+            overflow: "hidden",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            overflowX: "auto",
+          }}
+        >
+          <table
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              minWidth: "800px",
+            }}
+          >
+            <thead style={{ background: "#f9fafb" }}>
+              <tr>
+                <th
+                  style={{
+                    padding: "16px",
+                    textAlign: "left",
+                    fontSize: "0.9rem",
+                    color: "#6b7280",
+                  }}
+                >
+                  ID
+                </th>
+                <th
+                  style={{
+                    padding: "16px",
+                    textAlign: "left",
+                    fontSize: "0.9rem",
+                    color: "#6b7280",
+                  }}
+                >
+                  Ngày tạo
+                </th>
+                <th
+                  style={{
+                    padding: "16px",
+                    textAlign: "left",
+                    fontSize: "0.9rem",
+                    color: "#6b7280",
+                  }}
+                >
+                  Khách hàng
+                </th>
+                <th
+                  style={{
+                    padding: "16px",
+                    textAlign: "left",
+                    fontSize: "0.9rem",
+                    color: "#6b7280",
+                  }}
+                >
+                  Loại / Bàn
+                </th>
+                <th
+                  style={{
+                    padding: "16px",
+                    textAlign: "right",
+                    fontSize: "0.9rem",
+                    color: "#6b7280",
+                  }}
+                >
+                  Tổng tiền
+                </th>
+                <th
+                  style={{
+                    padding: "16px",
+                    textAlign: "center",
+                    fontSize: "0.9rem",
+                    color: "#6b7280",
+                  }}
+                >
+                  Thanh toán
+                </th>
+                <th
+                  style={{
+                    padding: "16px",
+                    textAlign: "center",
+                    fontSize: "0.9rem",
+                    color: "#6b7280",
+                  }}
+                >
+                  Trạng thái
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={7}
+                    style={{
+                      padding: "40px",
+                      textAlign: "center",
+                      color: "#6b7280",
+                    }}
+                  >
+                    Không có đơn hàng nào.
+                  </td>
+                </tr>
+              ) : (
+                orders.map((order) => (
+                  <tr key={order.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+                    <td style={{ padding: "16px", fontWeight: 600 }}>
+                      #{order.id}
+                    </td>
+                    <td style={{ padding: "16px", color: "#374151" }}>
+                      {formatDate(order.createdAt)}
+                    </td>
+                    <td style={{ padding: "16px" }}>
+                      <div style={{ fontWeight: 500 }}>
+                        {order.userFullName || "Khách lẻ"}
+                      </div>
+                    </td>
+                    <td style={{ padding: "16px" }}>
+                      <span
+                        style={{
+                          background:
+                            order.orderType === "Dinein"
+                              ? "#e0f2fe"
+                              : "#fff7ed",
+                          color:
+                            order.orderType === "Dinein"
+                              ? "#0369a1"
+                              : "#c2410c",
+                          padding: "2px 8px",
+                          borderRadius: "4px",
+                          fontSize: "0.8rem",
+                          marginRight: "8px",
+                        }}
+                      >
+                        {order.orderType === "Dinein" ? "Tại bàn" : "Mang về"}
+                      </span>
+                      {order.tableName && (
+                        <span style={{ fontSize: "0.9rem", color: "#4b5563" }}>
+                          {order.tableName}
+                        </span>
+                      )}
+                    </td>
+                    <td
+                      style={{
+                        padding: "16px",
+                        textAlign: "right",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {formatCurrency(order.totalAmount)}
+                    </td>
+                    <td style={{ padding: "16px", textAlign: "center" }}>
+                      {order.paymentStatus === "Successful" ? (
+                        <span
+                          style={{
+                            color: "#10b981",
+                            fontWeight: 600,
+                            fontSize: "0.9rem",
+                          }}
+                        >
+                          ✓ Đã TT
+                        </span>
+                      ) : (
+                        <span style={{ color: "#f59e0b", fontSize: "0.9rem" }}>
+                          Chưa TT
+                        </span>
+                      )}
+                    </td>
+                    <td style={{ padding: "16px", textAlign: "center" }}>
+                      <span
+                        style={{
+                          backgroundColor: getStatusColor(order.status),
+                          color: "white",
+                          padding: "4px 12px",
+                          borderRadius: "20px",
+                          fontSize: "0.85rem",
+                          fontWeight: 500,
+                        }}
+                      >
+                        {order.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
