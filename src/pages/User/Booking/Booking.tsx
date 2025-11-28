@@ -38,9 +38,8 @@ const Booking: React.FC = () => {
         const response = await apiClient.get("/api/tables/availability", {
           params: { time: dateTimeStr },
         });
-
         const tablesData = Array.isArray(response.data) ? response.data : [];
-
+        console.log("Table availability data:", tablesData);
         const formattedTables: Table[] = tablesData.map((table: any) => ({
           id: table.id,
           tableNumber: table.tableNumber,
