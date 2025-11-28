@@ -26,9 +26,10 @@ interface Order {
   tableId: number | null;
   tableName: string | null;
   totalAmount: number;
-  status: string; // Pending, Confirmed, etc.
-  orderType: string; // Dinein, Takeaway
+  status: string;
+  orderType: string;
   createdAt: string;
+  bookingTime?: string;
   orderItems: OrderItem[];
 }
 
@@ -365,10 +366,23 @@ const StaffOrders: React.FC = () => {
                             <i className="fas fa-chair"></i> {order.tableName}
                           </span>
                         )}
-                        <span className="staff-order-date">
-                          <i className="fas fa-clock"></i>{" "}
-                          {formatDate(order.createdAt)}
-                        </span>
+                        {order.bookingTime ? (
+                          <span
+                            className="staff-order-date"
+                            title="Giờ đặt bàn"
+                          >
+                            <i className="fas fa-calendar-alt"></i>{" "}
+                            {formatDate(order.bookingTime)}
+                          </span>
+                        ) : (
+                          <span
+                            className="staff-order-date"
+                            title="Giờ tạo đơn"
+                          >
+                            <i className="fas fa-clock"></i>{" "}
+                            {formatDate(order.createdAt)}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div

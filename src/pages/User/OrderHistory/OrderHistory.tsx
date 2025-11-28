@@ -4,7 +4,6 @@ import apiClient from "../../../services/api";
 import Button from "../../../components/Button";
 import "./OrderHistory.css";
 
-
 interface OrderItem {
   id: number;
   menuItemId: number;
@@ -24,6 +23,7 @@ interface Order {
   status: string;
   totalAmount: number;
   createdAt: string;
+  bookingTime?: string;
   orderItems: OrderItem[];
   paymentStatus?: string;
 }
@@ -33,18 +33,15 @@ const OrderHistory: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
-  
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
 
-  
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentOrderId, setPaymentOrderId] = useState<number | null>(null);
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-  
   useEffect(() => {
     const fetchOrders = async () => {
       if (!userId) {
@@ -55,7 +52,7 @@ const OrderHistory: React.FC = () => {
       try {
         const response = await apiClient.get(`/api/orders/user/${userId}`);
         console.log("Fetched orders:", response.data);
-        
+
         setOrders(response.data.reverse());
       } catch (error) {
         console.error("Error fetching orders:", error);
@@ -67,7 +64,6 @@ const OrderHistory: React.FC = () => {
     fetchOrders();
   }, [userId]);
 
-  
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
@@ -101,8 +97,6 @@ const OrderHistory: React.FC = () => {
     }
   };
 
-  
-
   const handleViewDetails = async (orderId: number) => {
     try {
       const response = await apiClient.get(`/api/orders/${orderId}`);
@@ -118,7 +112,6 @@ const OrderHistory: React.FC = () => {
   };
 
   const handleEditOrder = (order: Order) => {
-    
     setEditingOrder(JSON.parse(JSON.stringify(order)));
   };
 
@@ -170,7 +163,6 @@ const OrderHistory: React.FC = () => {
       await apiClient.put(`/api/orders/${editingOrder.id}`, orderCreateRequest);
       alert("Cập nhật đơn hàng thành công!");
 
-      
       const response = await apiClient.get(`/api/orders/user/${userId}`);
       const ordersData = Array.isArray(response.data)
         ? response.data
@@ -196,7 +188,6 @@ const OrderHistory: React.FC = () => {
       await apiClient.patch(`/api/orders/${orderId}/cancel`);
       alert("Đã hủy đơn hàng thành công!");
 
-      
       const response = await apiClient.get(`/api/orders/user/${userId}`);
       const ordersData = Array.isArray(response.data)
         ? response.data
@@ -209,8 +200,6 @@ const OrderHistory: React.FC = () => {
       setUpdatingOrderId(null);
     }
   };
-
-  
 
   const openPaymentModal = (order: Order) => {
     setPaymentOrderId(order.id);
@@ -289,7 +278,7 @@ const OrderHistory: React.FC = () => {
               <thead>
                 <tr>
                   <th>STT</th>
-                  <th>Ngày đặt</th>
+                  <th>Thời gian</th>
                   <th>Loại đơn</th>
                   <th>Tổng tiền</th>
                   <th>Trạng thái</th>
@@ -301,7 +290,9 @@ const OrderHistory: React.FC = () => {
                   <tr key={order.id}>
                     <td className="order-id">{index + 1}</td>
                     <td className="order-date">
-                      {new Date(order.createdAt).toLocaleString("vi-VN")}
+                      {new Date(
+                        order.bookingTime || order.createdAt
+                      ).toLocaleString("vi-VN")}
                     </td>
                     <td className="order-type">
                       {order.orderType === "Dinein" ? "Tại chỗ" : "Mang về"}
@@ -327,7 +318,6 @@ const OrderHistory: React.FC = () => {
                           Chi tiết
                         </button>
 
-                        
                         {order.status === "Pending" && (
                           <>
                             <button
@@ -349,7 +339,6 @@ const OrderHistory: React.FC = () => {
                           </>
                         )}
 
-                        
                         {order.status === "Completed" &&
                           order.paymentStatus !== "Successful" && (
                             <button
@@ -394,7 +383,6 @@ const OrderHistory: React.FC = () => {
         )}
       </div>
 
-      
       {showPaymentModal && (
         <div
           className="modal-overlay"
@@ -467,7 +455,6 @@ const OrderHistory: React.FC = () => {
         </div>
       )}
 
-      
       {editingOrder && (
         <div className="modal-overlay" onClick={handleCancelEdit}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -480,8 +467,10 @@ const OrderHistory: React.FC = () => {
             <div className="modal-body">
               <div className="order-info">
                 <p>
-                  <strong>Ngày đặt:</strong>{" "}
-                  {new Date(editingOrder.createdAt).toLocaleString("vi-VN")}
+                  <strong>Thời gian:</strong>{" "}
+                  {new Date(
+                    editingOrder.bookingTime || editingOrder.createdAt
+                  ).toLocaleString("vi-VN")}
                 </p>
                 <p>
                   <strong>Loại đơn:</strong>{" "}
@@ -561,7 +550,6 @@ const OrderHistory: React.FC = () => {
         </div>
       )}
 
-      
       {selectedOrder && (
         <div className="modal-overlay" onClick={handleCloseModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -574,8 +562,11 @@ const OrderHistory: React.FC = () => {
             <div className="modal-body">
               <div className="order-info">
                 <p>
-                  <strong>Ngày đặt:</strong>{" "}
-                  {new Date(selectedOrder.createdAt).toLocaleString("vi-VN")}
+                  <strong>Thời gian:</strong>{" "}
+                  {new Date(
+                    selectedOrder.bookingTime || selectedOrder.createdAt
+                  ).toLocaleString("vi-VN")}
+                  {selectedOrder.bookingTime ? " (Đặt bàn)" : " (Tạo đơn)"}
                 </p>
                 <p>
                   <strong>Loại đơn:</strong>{" "}

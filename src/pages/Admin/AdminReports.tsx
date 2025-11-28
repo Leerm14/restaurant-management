@@ -48,6 +48,7 @@ interface OrderReportItem {
   status: string;
   orderType: string;
   createdAt: string;
+  bookingTime?: string;
   paymentStatus?: string;
 }
 
@@ -165,6 +166,7 @@ const AdminReports: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A";
     return new Date(dateString).toLocaleString("vi-VN");
   };
 
@@ -714,7 +716,7 @@ const AdminReports: React.FC = () => {
                     color: "#6b7280",
                   }}
                 >
-                  Ngày tạo
+                  Thời gian đặt
                 </th>
                 <th
                   style={{
@@ -789,7 +791,7 @@ const AdminReports: React.FC = () => {
                       #{order.id}
                     </td>
                     <td style={{ padding: "16px", color: "#374151" }}>
-                      {formatDate(order.createdAt)}
+                      {formatDate(order.bookingTime || order.createdAt)}
                     </td>
                     <td style={{ padding: "16px" }}>
                       <div style={{ fontWeight: 500 }}>
